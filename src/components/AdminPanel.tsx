@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import type { JoiningRequest } from "@/lib/supabase";
-import { Check, X, LogOut, RefreshCw, Eye, Users, Clock, CheckCircle, CreditCard, UserCheck, Plus, Trash2, Edit2, Save, Upload, UserPlus } from "lucide-react";
+import { Check, X, LogOut, RefreshCw, Eye, Users, Clock, CheckCircle, CreditCard, UserCheck, Plus, Trash2, Edit2, Save, Upload, UserPlus, Printer, Download } from "lucide-react";
 import { Session } from "@supabase/supabase-js";
 
 interface PaymentMethod {
@@ -26,7 +26,7 @@ interface CommitteeMember {
   sort_order: number;
 }
 
-type AdminTab = 'requests' | 'payments' | 'committee' | 'members';
+type AdminTab = 'requests' | 'payments' | 'committee' | 'members' | 'print';
 
 export default function AdminPanel() {
   const [session, setSession] = useState<Session | null>(null);
@@ -68,6 +68,11 @@ export default function AdminPanel() {
   const participantPhotoRef = useRef<HTMLInputElement>(null);
   const sscBatches = Array.from({ length: 2026 - 1960 + 1 }, (_, i) => 2026 - i);
 
+  // Print list state
+  const [approvedList, setApprovedList] = useState<JoiningRequest[]>([]);
+  const [printLoading, setPrintLoading] = useState(false);
+  const [printBatchFilter, setPrintBatchFilter] = useState<string>('all');
+
   useEffect(() => {
     supabase.auth.onAuthStateChange((_, s) => {
       setSession(s);
@@ -89,6 +94,7 @@ export default function AdminPanel() {
       fetchRequests();
       fetchPaymentMethods();
       fetchCommittee();
+      fetchApprovedList();
     }
   }, [session, isAdmin, filter]);
 
@@ -109,6 +115,101 @@ export default function AdminPanel() {
   const fetchCommittee = async () => {
     const { data } = await supabase.from('committee_members').select('*').order('sort_order', { ascending: true });
     setCommittee((data as CommitteeMember[]) || []);
+  };
+
+  const fetchApprovedList = async () => {
+    setPrintLoading(true);
+    const { data } = await supabase
+      .from('joining_requests')
+      .select('*')
+      .eq('status', 'approved')
+      .order('ssc_batch', { ascending: false });
+    setApprovedList((data as JoiningRequest[]) || []);
+    setPrintLoading(false);
+  };
+
+  const downloadCSV = (list: JoiningRequest[]) => {
+    const header = 'ক্রমিক,নাম,ব্যাচ,পেমেন্ট পদ্ধতি,পরিমাণ (৳),তারিখ';
+    const rows = list.map((r, i) =>
+      `${i + 1},"${r.name}",${r.ssc_batch},"${r.payment_method}",${r.payment_amount},"${new Date(r.created_at).toLocaleDateString('bn-BD')}"`
+    );
+    const csv = '\uFEFF' + [header, ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `iftar-list-${printBatchFilter === 'all' ? 'all' : printBatchFilter + '-batch'}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const printList = (list: JoiningRequest[]) => {
+    const batches = printBatchFilter === 'all'
+      ? [...new Set(list.map(r => r.ssc_batch))].sort((a, b) => b - a)
+      : [parseInt(printBatchFilter)];
+
+    const groupedHTML = batches.map(batch => {
+      const members = list.filter(r => r.ssc_batch === batch);
+      const rows = members.map((r, i) => `
+        <tr>
+          <td style="padding:6px 10px;border:1px solid #ccc;text-align:center;">${i + 1}</td>
+          <td style="padding:6px 10px;border:1px solid #ccc;">${r.name}</td>
+          <td style="padding:6px 10px;border:1px solid #ccc;text-align:center;">${r.payment_method}</td>
+          <td style="padding:6px 10px;border:1px solid #ccc;text-align:center;">৳${r.payment_amount}</td>
+          <td style="padding:6px 10px;border:1px solid #ccc;"></td>
+        </tr>`).join('');
+      return `
+        <div style="margin-bottom:32px;page-break-inside:avoid;">
+          <h3 style="background:#1a4731;color:#f5c842;padding:8px 16px;margin:0 0 0 0;font-size:16px;border-radius:4px 4px 0 0;">
+            ${batch} ব্যাচ — মোট: ${members.length} জন
+          </h3>
+          <table style="width:100%;border-collapse:collapse;font-size:13px;">
+            <thead>
+              <tr style="background:#f0f0f0;">
+                <th style="padding:6px 10px;border:1px solid #ccc;width:40px;">ক্রমিক</th>
+                <th style="padding:6px 10px;border:1px solid #ccc;text-align:left;">নাম</th>
+                <th style="padding:6px 10px;border:1px solid #ccc;width:100px;">পেমেন্ট</th>
+                <th style="padding:6px 10px;border:1px solid #ccc;width:80px;">পরিমাণ</th>
+                <th style="padding:6px 10px;border:1px solid #ccc;width:80px;">স্বাক্ষর</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>`;
+    }).join('');
+
+    const totalAmount = list.reduce((s, r) => s + Number(r.payment_amount), 0);
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+    printWindow.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>ইফতার ২০২৬ — অংশগ্রহণকারী তালিকা</title>
+  <style>
+    body { font-family: 'SolaimanLipi', Arial, sans-serif; margin: 20px; color: #111; }
+    @media print { body { margin: 10px; } }
+    h1 { text-align:center; color:#1a4731; margin-bottom:4px; font-size:20px; }
+    .meta { text-align:center; color:#666; font-size:13px; margin-bottom:24px; }
+    .summary { display:flex; gap:24px; justify-content:center; margin-bottom:24px; background:#f9f9f9; padding:12px; border-radius:8px; }
+    .summary div { text-align:center; }
+    .summary strong { display:block; font-size:18px; color:#1a4731; }
+  </style>
+</head>
+<body>
+  <h1>🌙 খেপুপাড়া হাইস্কুলিয়ান ইফতার মাহফিল ২০২৬</h1>
+  <p class="meta">২৮শে রমজান · ১৮ই মার্চ ২০২৬ · খেপুপাড়া উপজেলা হাই স্কুল</p>
+  <div class="summary">
+    <div><strong>${list.length} জন</strong>মোট অংশগ্রহণকারী</div>
+    <div><strong>৳${totalAmount}</strong>মোট সংগ্রহ</div>
+    <div><strong>${printBatchFilter === 'all' ? batches.length + 'টি' : printBatchFilter}</strong>${printBatchFilter === 'all' ? 'ব্যাচ' : 'ব্যাচ'}</div>
+  </div>
+  ${groupedHTML}
+  <p style="text-align:right;font-size:11px;color:#999;margin-top:24px;">মুদ্রণের তারিখ: ${new Date().toLocaleDateString('bn-BD')}</p>
+</body>
+</html>`);
+    printWindow.document.close();
+    printWindow.print();
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -331,6 +432,7 @@ export default function AdminPanel() {
             { key: 'members', label: 'সদস্য যোগ', icon: UserPlus },
             { key: 'payments', label: 'পেমেন্ট', icon: CreditCard },
             { key: 'committee', label: 'কমিটি', icon: UserCheck },
+            { key: 'print', label: 'প্রিন্ট', icon: Printer },
           ] as const).map(tab => (
             <button key={tab.key} onClick={() => setActiveTab(tab.key)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bengali transition whitespace-nowrap ${activeTab === tab.key ? 'bg-white/20 text-white' : 'text-white/60 hover:bg-white/10'}`}>
@@ -777,6 +879,138 @@ export default function AdminPanel() {
                 </div>
               )}
             </div>
+          </div>
+        )}
+
+        {/* ===== PRINT TAB ===== */}
+        {activeTab === 'print' && (
+          <div>
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <Printer className="w-8 h-8 text-primary" />
+              </div>
+              <h2 className="font-bengali text-2xl font-bold text-foreground mb-2">অংশগ্রহণকারী তালিকা</h2>
+              <p className="font-bengali text-muted-foreground text-sm">অনুমোদিত সকল সদস্যের তালিকা প্রিন্ট বা ডাউনলোড করুন</p>
+            </div>
+
+            {/* Stats bar */}
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              <div className="bg-card rounded-2xl border border-border p-4 text-center">
+                <p className="font-display text-2xl font-bold text-primary">{approvedList.length}</p>
+                <p className="font-bengali text-xs text-muted-foreground">মোট সদস্য</p>
+              </div>
+              <div className="bg-card rounded-2xl border border-border p-4 text-center">
+                <p className="font-display text-2xl font-bold text-primary">
+                  {[...new Set(approvedList.map(r => r.ssc_batch))].length}
+                </p>
+                <p className="font-bengali text-xs text-muted-foreground">ব্যাচ সংখ্যা</p>
+              </div>
+              <div className="bg-card rounded-2xl border border-border p-4 text-center">
+                <p className="font-display text-2xl font-bold text-primary">
+                  ৳{approvedList.reduce((s, r) => s + Number(r.payment_amount), 0)}
+                </p>
+                <p className="font-bengali text-xs text-muted-foreground">মোট সংগ্রহ</p>
+              </div>
+            </div>
+
+            {/* Filters & Actions */}
+            <div className="bg-card rounded-2xl border border-border p-5 mb-6 space-y-4">
+              <div>
+                <label className="font-bengali text-sm font-semibold text-foreground mb-2 block">ব্যাচ ফিল্টার</label>
+                <select
+                  value={printBatchFilter}
+                  onChange={e => setPrintBatchFilter(e.target.value)}
+                  className="w-full border border-border rounded-xl px-3 py-2 text-sm text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition font-bengali"
+                >
+                  <option value="all">সব ব্যাচ একসাথে</option>
+                  {[...new Set(approvedList.map(r => r.ssc_batch))].sort((a, b) => b - a).map(batch => (
+                    <option key={batch} value={String(batch)}>{batch} ব্যাচ ({approvedList.filter(r => r.ssc_batch === batch).length} জন)</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    const list = printBatchFilter === 'all'
+                      ? approvedList
+                      : approvedList.filter(r => r.ssc_batch === parseInt(printBatchFilter));
+                    printList(list);
+                  }}
+                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bengali font-bold text-sm bg-primary text-primary-foreground hover:opacity-90 transition"
+                >
+                  <Printer className="w-4 h-4" />
+                  প্রিন্ট করুন
+                </button>
+                <button
+                  onClick={() => {
+                    const list = printBatchFilter === 'all'
+                      ? approvedList
+                      : approvedList.filter(r => r.ssc_batch === parseInt(printBatchFilter));
+                    downloadCSV(list);
+                  }}
+                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bengali font-bold text-sm border border-primary text-primary hover:bg-primary/5 transition"
+                >
+                  <Download className="w-4 h-4" />
+                  CSV ডাউনলোড
+                </button>
+              </div>
+              <p className="font-bengali text-xs text-muted-foreground text-center">
+                প্রিন্ট করলে ব্যাচ অনুযায়ী গ্রুপ + স্বাক্ষরের কলামসহ সুন্দর তালিকা পাবেন
+              </p>
+            </div>
+
+            {/* Preview */}
+            {printLoading ? (
+              <div className="text-center py-10">
+                <RefreshCw className="w-6 h-6 text-primary mx-auto animate-spin mb-2" />
+                <p className="font-bengali text-muted-foreground">লোড হচ্ছে...</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {(printBatchFilter === 'all'
+                  ? [...new Set(approvedList.map(r => r.ssc_batch))].sort((a, b) => b - a)
+                  : [parseInt(printBatchFilter)]
+                ).map(batch => {
+                  const members = approvedList.filter(r => r.ssc_batch === batch);
+                  return (
+                    <div key={batch} className="bg-card rounded-2xl border border-border overflow-hidden">
+                      <div className="bg-primary px-5 py-3 flex items-center justify-between">
+                        <p className="font-bengali font-bold text-primary-foreground">{batch} ব্যাচ</p>
+                        <span className="bg-white/20 text-white text-xs font-bengali px-2 py-0.5 rounded-full">{members.length} জন</span>
+                      </div>
+                      <div className="divide-y divide-border">
+                        {members.map((r, i) => (
+                          <div key={r.id} className="flex items-center gap-3 px-4 py-3">
+                            <span className="text-xs text-muted-foreground w-7 text-right font-display">{i + 1}.</span>
+                            {r.photo_url ? (
+                              <img src={r.photo_url} alt={r.name} className="w-8 h-8 rounded-full object-cover border border-primary/20 flex-shrink-0" />
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                <span className="text-xs font-bold text-primary">{r.name.charAt(0)}</span>
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="font-bengali font-semibold text-foreground text-sm">{r.name}</p>
+                            </div>
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              <span className="font-bengali text-xs text-muted-foreground">{r.payment_method}</span>
+                              <span className="font-bengali text-xs font-semibold text-primary">৳{r.payment_amount}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+                {approvedList.length === 0 && (
+                  <div className="text-center py-12">
+                    <Users className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
+                    <p className="font-bengali text-muted-foreground">এখনো কোনো অনুমোদিত সদস্য নেই</p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
