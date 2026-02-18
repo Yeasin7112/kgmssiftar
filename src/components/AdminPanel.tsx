@@ -37,8 +37,10 @@ export default function AdminPanel() {
   const [requests, setRequests] = useState<JoiningRequest[]>([]);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
+  const [searchQuery, setSearchQuery] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
   const [activeTab, setActiveTab] = useState<AdminTab>('requests');
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // Payment methods state
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
@@ -229,6 +231,16 @@ export default function AdminPanel() {
   const updateStatus = async (id: string, status: 'approved' | 'rejected') => {
     await supabase.from('joining_requests').update({ status }).eq('id', id);
     fetchRequests();
+    fetchApprovedList();
+  };
+
+  const deleteRequest = async (id: string) => {
+    if (!window.confirm('এই সদস্যকে তালিকা থেকে মুছে ফেলবেন?')) return;
+    setDeletingId(id);
+    await supabase.from('joining_requests').delete().eq('id', id);
+    setDeletingId(null);
+    fetchRequests();
+    fetchApprovedList();
   };
 
   // Payment method CRUD
@@ -468,94 +480,141 @@ export default function AdminPanel() {
               ))}
             </div>
 
-            <div className="flex gap-2 mb-6 flex-wrap">
-              {(['all', 'pending', 'approved', 'rejected'] as const).map(f => {
-                const labels = { all: 'সব', pending: 'অপেক্ষারত', approved: 'অনুমোদিত', rejected: 'বাতিল' };
-                return (
-                  <button key={f} onClick={() => setFilter(f)}
-                    className={`px-4 py-2 rounded-full font-bengali text-sm font-medium transition ${filter === f ? 'bg-primary text-primary-foreground' : 'bg-card border border-border text-muted-foreground hover:border-primary/50'}`}>
-                    {labels[f]}
+            {/* Search + Filter row */}
+            <div className="flex flex-col sm:flex-row gap-3 mb-6">
+              <div className="relative flex-1">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  placeholder="নাম দিয়ে খুঁজুন..."
+                  className="w-full border border-border rounded-xl pl-10 pr-4 py-2.5 text-sm font-bengali text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition"
+                />
+                <Eye className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                {searchQuery && (
+                  <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <X className="w-4 h-4 text-muted-foreground hover:text-foreground transition" />
                   </button>
-                );
-              })}
+                )}
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                {(['all', 'pending', 'approved', 'rejected'] as const).map(f => {
+                  const labels = { all: 'সব', pending: 'অপেক্ষারত', approved: 'অনুমোদিত', rejected: 'বাতিল' };
+                  return (
+                    <button key={f} onClick={() => setFilter(f)}
+                      className={`px-3 py-2 rounded-full font-bengali text-sm font-medium transition whitespace-nowrap ${filter === f ? 'bg-primary text-primary-foreground' : 'bg-card border border-border text-muted-foreground hover:border-primary/50'}`}>
+                      {labels[f]}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
-            {loading ? (
-              <div className="text-center py-12">
-                <RefreshCw className="w-8 h-8 text-primary mx-auto animate-spin mb-3" />
-                <p className="font-bengali text-muted-foreground">লোড হচ্ছে...</p>
-              </div>
-            ) : requests.length === 0 ? (
-              <div className="text-center py-12">
-                <Eye className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
-                <p className="font-bengali text-muted-foreground">কোনো রিকুয়েস্ট নেই</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {requests.map(req => (
-                  <div key={req.id} className="bg-card rounded-2xl border border-border shadow-card p-4 md:p-5">
-                    <div className="flex items-start gap-4">
-                      {req.photo_url ? (
-                        <img src={req.photo_url} alt={req.name} className="w-14 h-14 rounded-full object-cover border-2 border-primary/20 flex-shrink-0" />
-                      ) : (
-                        <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                          <span className="text-xl font-bold text-primary font-bengali">{req.name.charAt(0)}</span>
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2 flex-wrap">
-                          <div>
-                            <h3 className="font-bengali font-bold text-lg text-foreground">{req.name}</h3>
-                            <div className="flex items-center gap-2 flex-wrap mt-1">
-                              <span className="bg-primary/10 text-primary text-xs font-bengali px-2 py-0.5 rounded-full">{req.ssc_batch} ব্যাচ</span>
-                              {statusBadge(req.status)}
-                              {req.payment_method === 'manual' && (
-                                <span className="bg-green-100 text-green-700 text-xs font-bengali px-2 py-0.5 rounded-full border border-green-200">হাতে হাতে</span>
+            {(() => {
+              const filtered = requests.filter(r =>
+                r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                String(r.ssc_batch).includes(searchQuery)
+              );
+              if (loading) return (
+                <div className="text-center py-12">
+                  <RefreshCw className="w-8 h-8 text-primary mx-auto animate-spin mb-3" />
+                  <p className="font-bengali text-muted-foreground">লোড হচ্ছে...</p>
+                </div>
+              );
+              if (filtered.length === 0) return (
+                <div className="text-center py-12">
+                  <Eye className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
+                  <p className="font-bengali text-muted-foreground">
+                    {searchQuery ? `"${searchQuery}" — কোনো ফলাফল পাওয়া যায়নি` : 'কোনো রিকুয়েস্ট নেই'}
+                  </p>
+                </div>
+              );
+              return (
+                <div className="space-y-4">
+                  {searchQuery && (
+                    <p className="font-bengali text-sm text-muted-foreground">
+                      {filtered.length}টি ফলাফল পাওয়া গেছে
+                    </p>
+                  )}
+                  {filtered.map(req => (
+                    <div key={req.id} className="bg-card rounded-2xl border border-border shadow-card p-4 md:p-5">
+                      <div className="flex items-start gap-4">
+                        {req.photo_url ? (
+                          <img src={req.photo_url} alt={req.name} className="w-14 h-14 rounded-full object-cover border-2 border-primary/20 flex-shrink-0" />
+                        ) : (
+                          <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                            <span className="text-xl font-bold text-primary font-bengali">{req.name.charAt(0)}</span>
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-2 flex-wrap">
+                            <div>
+                              <h3 className="font-bengali font-bold text-lg text-foreground">{req.name}</h3>
+                              <div className="flex items-center gap-2 flex-wrap mt-1">
+                                <span className="bg-primary/10 text-primary text-xs font-bengali px-2 py-0.5 rounded-full">{req.ssc_batch} ব্যাচ</span>
+                                {statusBadge(req.status)}
+                                {req.payment_method === 'manual' && (
+                                  <span className="bg-green-100 text-green-700 text-xs font-bengali px-2 py-0.5 rounded-full border border-green-200">হাতে হাতে</span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {req.status === 'pending' && (
+                                <>
+                                  <button onClick={() => updateStatus(req.id, 'approved')}
+                                    className="flex items-center gap-1 bg-green-100 text-green-700 border border-green-200 px-3 py-1.5 rounded-lg font-bengali text-sm hover:bg-green-200 transition">
+                                    <Check className="w-4 h-4" /><span>অনুমোদন</span>
+                                  </button>
+                                  <button onClick={() => updateStatus(req.id, 'rejected')}
+                                    className="flex items-center gap-1 bg-red-50 text-red-600 border border-red-200 px-3 py-1.5 rounded-lg font-bengali text-sm hover:bg-red-100 transition">
+                                    <X className="w-4 h-4" /><span>বাতিল</span>
+                                  </button>
+                                </>
                               )}
-                            </div>
-                          </div>
-                          {req.status === 'pending' && (
-                            <div className="flex items-center gap-2">
-                              <button onClick={() => updateStatus(req.id, 'approved')}
-                                className="flex items-center gap-1 bg-green-100 text-green-700 border border-green-200 px-3 py-1.5 rounded-lg font-bengali text-sm hover:bg-green-200 transition">
-                                <Check className="w-4 h-4" /><span>অনুমোদন</span>
+                              <button
+                                onClick={() => deleteRequest(req.id)}
+                                disabled={deletingId === req.id}
+                                className="flex items-center gap-1 bg-red-50 text-red-600 border border-red-200 px-3 py-1.5 rounded-lg font-bengali text-sm hover:bg-red-100 transition disabled:opacity-50"
+                                title="মুছে ফেলুন"
+                              >
+                                {deletingId === req.id
+                                  ? <RefreshCw className="w-4 h-4 animate-spin" />
+                                  : <Trash2 className="w-4 h-4" />
+                                }
+                                <span className="hidden sm:inline">মুছুন</span>
                               </button>
-                              <button onClick={() => updateStatus(req.id, 'rejected')}
-                                className="flex items-center gap-1 bg-red-50 text-red-600 border border-red-200 px-3 py-1.5 rounded-lg font-bengali text-sm hover:bg-red-100 transition">
-                                <X className="w-4 h-4" /><span>বাতিল</span>
-                              </button>
                             </div>
-                          )}
-                        </div>
-                        <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
-                          <div className="bg-muted/50 rounded-lg px-3 py-2">
-                            <p className="text-xs font-bengali text-muted-foreground">পেমেন্ট</p>
-                            <p className="font-bengali font-semibold text-foreground">৳{req.payment_amount}</p>
                           </div>
-                          <div className="bg-muted/50 rounded-lg px-3 py-2">
-                            <p className="text-xs font-bengali text-muted-foreground">মাধ্যম</p>
-                            <p className="font-bengali font-semibold text-foreground capitalize">{req.payment_method}</p>
+                          <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
+                            <div className="bg-muted/50 rounded-lg px-3 py-2">
+                              <p className="text-xs font-bengali text-muted-foreground">পেমেন্ট</p>
+                              <p className="font-bengali font-semibold text-foreground">৳{req.payment_amount}</p>
+                            </div>
+                            <div className="bg-muted/50 rounded-lg px-3 py-2">
+                              <p className="text-xs font-bengali text-muted-foreground">মাধ্যম</p>
+                              <p className="font-bengali font-semibold text-foreground capitalize">{req.payment_method}</p>
+                            </div>
+                            {req.payment_number && (
+                              <div className="bg-muted/50 rounded-lg px-3 py-2">
+                                <p className="text-xs font-bengali text-muted-foreground">নম্বর</p>
+                                <p className="font-semibold text-foreground text-xs">{req.payment_number}</p>
+                              </div>
+                            )}
+                            {req.transaction_id && (
+                              <div className="bg-muted/50 rounded-lg px-3 py-2">
+                                <p className="text-xs font-bengali text-muted-foreground">TxnID</p>
+                                <p className="font-semibold text-foreground text-xs truncate">{req.transaction_id}</p>
+                              </div>
+                            )}
                           </div>
-                          {req.payment_number && (
-                            <div className="bg-muted/50 rounded-lg px-3 py-2">
-                              <p className="text-xs font-bengali text-muted-foreground">নম্বর</p>
-                              <p className="font-semibold text-foreground text-xs">{req.payment_number}</p>
-                            </div>
-                          )}
-                          {req.transaction_id && (
-                            <div className="bg-muted/50 rounded-lg px-3 py-2">
-                              <p className="text-xs font-bengali text-muted-foreground">TxnID</p>
-                              <p className="font-semibold text-foreground text-xs truncate">{req.transaction_id}</p>
-                            </div>
-                          )}
+                          <p className="text-xs text-muted-foreground mt-2">{new Date(req.created_at).toLocaleString('bn-BD')}</p>
                         </div>
-                        <p className="text-xs text-muted-foreground mt-2">{new Date(req.created_at).toLocaleString('bn-BD')}</p>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
+                  ))}
+                </div>
+              );
+            })()}
           </>
         )}
 
