@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { Upload, User, CreditCard, Hash, Phone } from "lucide-react";
 
@@ -6,28 +6,47 @@ interface JoiningFormProps {
   formRef: React.RefObject<HTMLDivElement>;
 }
 
-const PAYMENT_METHODS = [
-  { value: 'bkash', label: 'বিকাশ', number: '01XXXXXXXXX', color: '#C2185B' },
-  { value: 'nagad', label: 'নগদ', number: '01XXXXXXXXX', color: '#D84315' },
-  { value: 'rocket', label: 'রকেট', number: '01XXXXXXXXX', color: '#6A1B9A' },
-  { value: 'manual', label: 'হাতে হাতে', number: '', color: '#1B5E20' },
-];
+interface PaymentMethod {
+  id: string;
+  name: string;
+  number: string;
+  type: string;
+  icon: string;
+  instruction: string;
+}
 
 export default function JoiningForm({ formRef }: JoiningFormProps) {
   const [name, setName] = useState('');
   const [sscBatch, setSscBatch] = useState('');
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string>('');
-  const [paymentMethod, setPaymentMethod] = useState('bkash');
+  const [paymentMethod, setPaymentMethod] = useState('');
   const [paymentAmount, setPaymentAmount] = useState(100);
   const [paymentNumber, setPaymentNumber] = useState('');
   const [transactionId, setTransactionId] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const sscBatches = Array.from({ length: 2026 - 1960 + 1 }, (_, i) => 2026 - i);
+
+  useEffect(() => {
+    supabase
+      .from('payment_methods')
+      .select('*')
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true })
+      .then(({ data }) => {
+        const methods = (data || []) as PaymentMethod[];
+        setPaymentMethods(methods);
+        if (methods.length > 0) setPaymentMethod(methods[0].name.toLowerCase());
+      });
+  }, []);
+
+  const selectedMethod = paymentMethods.find(m => m.name.toLowerCase() === paymentMethod);
+  const isManual = selectedMethod?.type === 'হাতে হাতে' || selectedMethod?.name === 'হাতে হাতে';
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -50,8 +69,8 @@ export default function JoiningForm({ formRef }: JoiningFormProps) {
     if (!name.trim()) return setError('নাম দিন');
     if (!sscBatch) return setError('এসএসসি ব্যাচ সিলেক্ট করুন');
     if (paymentAmount < 100) return setError('সর্বনিম্ন চাঁদা ১০০ টাকা');
-    if (paymentMethod !== 'manual' && !paymentNumber.trim()) return setError('পেমেন্ট নম্বর দিন');
-    if (paymentMethod !== 'manual' && !transactionId.trim()) return setError('ট্রানজেকশন আইডি দিন');
+    if (!isManual && !paymentNumber.trim()) return setError('পেমেন্ট নম্বর দিন');
+    if (!isManual && !transactionId.trim()) return setError('ট্রানজেকশন আইডি দিন');
 
     setLoading(true);
     try {
@@ -83,7 +102,7 @@ export default function JoiningForm({ formRef }: JoiningFormProps) {
 
       setSuccess(true);
       setName(''); setSscBatch(''); setPhotoFile(null); setPhotoPreview('');
-      setPaymentMethod('bkash'); setPaymentAmount(100); setPaymentNumber(''); setTransactionId('');
+      setPaymentAmount(100); setPaymentNumber(''); setTransactionId('');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'কিছু একটা সমস্যা হয়েছে, আবার চেষ্টা করুন';
       setError(msg);
@@ -92,13 +111,11 @@ export default function JoiningForm({ formRef }: JoiningFormProps) {
     }
   };
 
-  const selectedMethod = PAYMENT_METHODS.find(m => m.value === paymentMethod);
-
   const inputCls = "w-full border border-border rounded-xl px-4 py-3 font-bengali text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition";
 
   if (success) {
     return (
-      <div ref={formRef} className="py-16 px-4 bg-muted/20">
+      <div ref={formRef} className="py-16 px-4 bg-background">
         <div className="max-w-lg mx-auto text-center bg-card rounded-2xl border border-border shadow-card p-10">
           <div className="text-6xl mb-4">🌙</div>
           <h3 className="font-bengali text-2xl font-bold text-primary mb-3">
@@ -119,7 +136,7 @@ export default function JoiningForm({ formRef }: JoiningFormProps) {
   }
 
   return (
-    <section ref={formRef} className="py-16 bg-muted/20" id="join-form">
+    <section ref={formRef} className="py-16 bg-background" id="join-form">
       <div className="container mx-auto px-4 max-w-2xl">
         {/* Section header */}
         <div className="text-center mb-10">
@@ -138,8 +155,8 @@ export default function JoiningForm({ formRef }: JoiningFormProps) {
 
         <form onSubmit={handleSubmit} className="shadow-card rounded-2xl border border-border overflow-hidden bg-card">
           {/* Form header */}
-          <div className="p-5 text-center" style={{ background: 'linear-gradient(135deg, hsl(158 70% 22%) 0%, hsl(158 64% 28%) 100%)' }}>
-            <p className="font-bengali font-semibold text-lg" style={{ color: 'hsl(44 90% 80%)' }}>
+          <div className="p-5 text-center bg-primary">
+            <p className="font-bengali font-semibold text-lg text-primary-foreground">
               🌙 ইফতার মাহফিল ২০২৬ — রেজিস্ট্রেশন
             </p>
           </div>
@@ -224,42 +241,48 @@ export default function JoiningForm({ formRef }: JoiningFormProps) {
               <p className="font-bengali text-xs text-muted-foreground mt-1 opacity-70">নূন্যতম ১০০ টাকা, ইচ্ছামতো ডোনেশন যোগ করতে পারেন</p>
             </div>
 
-            {/* Payment Method */}
-            <div>
-              <label className="font-bengali text-sm font-semibold text-foreground mb-3 block">পেমেন্ট পদ্ধতি *</label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-                {PAYMENT_METHODS.map(method => (
-                  <button key={method.value} type="button" onClick={() => setPaymentMethod(method.value)}
-                    className={`p-3 rounded-xl border-2 text-center font-bengali font-bold text-sm transition-all bg-background ${
-                      paymentMethod === method.value ? 'shadow-md scale-105' : 'border-border hover:border-primary/40'
-                    }`}
-                    style={paymentMethod === method.value ? { borderColor: method.color, background: method.color + '12' } : {}}>
-                    <div style={{ color: method.color }}>{method.label}</div>
-                  </button>
-                ))}
+            {/* Payment Method — fetched from DB */}
+            {paymentMethods.length > 0 && (
+              <div>
+                <label className="font-bengali text-sm font-semibold text-foreground mb-3 block">পেমেন্ট পদ্ধতি *</label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                  {paymentMethods.map(method => {
+                    const isActive = paymentMethod === method.name.toLowerCase();
+                    return (
+                      <button key={method.id} type="button"
+                        onClick={() => setPaymentMethod(method.name.toLowerCase())}
+                        className={`p-3 rounded-xl border-2 text-center font-bengali font-bold text-sm transition-all ${
+                          isActive ? 'border-primary bg-primary/10 scale-105 shadow-md' : 'border-border bg-background hover:border-primary/40'
+                        }`}>
+                        <div className="text-2xl mb-1">{method.icon}</div>
+                        <div className={isActive ? 'text-primary' : 'text-foreground'}>{method.name}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {selectedMethod && !isManual && (
+                  <div className="bg-primary/5 rounded-xl p-4 border border-primary/20">
+                    <p className="font-bengali text-sm text-foreground mb-1">
+                      <span className="font-semibold text-primary">{selectedMethod.name}</span> নম্বরে ৳{paymentAmount} পাঠান
+                    </p>
+                    <p className="font-display font-bold text-xl text-primary mb-1">{selectedMethod.number}</p>
+                    <p className="font-bengali text-xs text-muted-foreground">পেমেন্টের পর নিচে তথ্য পূরণ করুন</p>
+                  </div>
+                )}
+
+                {isManual && (
+                  <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                    <p className="font-bengali text-sm text-green-800 font-medium">
+                      সরাসরি হাতে হাতে টাকা দেওয়া যাবে। যোগাযোগ করুন।
+                    </p>
+                  </div>
+                )}
               </div>
+            )}
 
-              {paymentMethod !== 'manual' && selectedMethod && (
-                <div className="bg-primary/5 rounded-xl p-4 border border-primary/20">
-                  <p className="font-bengali text-sm text-foreground mb-1">
-                    <span className="font-semibold" style={{ color: selectedMethod.color }}>{selectedMethod.label}</span> নম্বরে ৳{paymentAmount} পাঠান
-                  </p>
-                  <p className="font-display font-bold text-lg text-foreground mb-2">01XXXXXXXXX</p>
-                  <p className="font-bengali text-xs text-muted-foreground">পেমেন্টের পর নিচে তথ্য পূরণ করুন</p>
-                </div>
-              )}
-
-              {paymentMethod === 'manual' && (
-                <div className="bg-green-50 border border-green-200 rounded-xl p-4">
-                  <p className="font-bengali text-sm text-green-800 font-medium">
-                    সরাসরি হাতে হাতে টাকা দেওয়া যাবে। যোগাযোগ করুন।
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Payment Number & TxnID */}
-            {paymentMethod !== 'manual' && (
+            {/* Payment Number & TxnID — only for non-manual */}
+            {!isManual && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="font-bengali text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
@@ -281,18 +304,13 @@ export default function JoiningForm({ formRef }: JoiningFormProps) {
             )}
 
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-                <p className="font-bengali text-sm text-red-700 font-medium">{error}</p>
+              <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4">
+                <p className="font-bengali text-sm text-destructive font-medium">{error}</p>
               </div>
             )}
 
             <button type="submit" disabled={loading}
-              className="w-full py-4 rounded-xl font-bengali text-lg font-bold transition-all hover:opacity-90 active:scale-95 disabled:opacity-50"
-              style={{
-                background: 'linear-gradient(135deg, hsl(44 85% 50%), hsl(38 90% 60%))',
-                color: 'hsl(158 70% 10%)',
-                boxShadow: '0 4px 20px hsl(44 80% 52% / 0.35)',
-              }}>
+              className="w-full py-4 rounded-xl font-bengali text-lg font-bold bg-gold text-primary hover:opacity-90 active:scale-95 disabled:opacity-50 transition-all shadow-lg">
               {loading ? '⏳ জমা হচ্ছে...' : '🌙 রেজিস্ট্রেশন জমা দিন'}
             </button>
           </div>
