@@ -1,6 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { Upload, User, CreditCard, Hash, Phone } from "lucide-react";
+import bkashLogo from "@/assets/bkash-logo.jpeg";
+import nagadLogo from "@/assets/nagad-logo.jpeg";
+import rocketLogo from "@/assets/rocket-logo.png";
 
 interface JoiningFormProps {
   formRef: React.RefObject<HTMLDivElement>;
@@ -248,13 +251,27 @@ export default function JoiningForm({ formRef }: JoiningFormProps) {
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
                   {paymentMethods.map(method => {
                     const isActive = paymentMethod === method.name.toLowerCase();
+                    const nameLower = method.name.toLowerCase();
+                    const logoMap: Record<string, string> = {
+                      'বিকাশ': bkashLogo,
+                      'bkash': bkashLogo,
+                      'নগদ': nagadLogo,
+                      'nagad': nagadLogo,
+                      'রকেট': rocketLogo,
+                      'rocket': rocketLogo,
+                    };
+                    const logoSrc = logoMap[method.name] || logoMap[nameLower];
                     return (
                       <button key={method.id} type="button"
                         onClick={() => setPaymentMethod(method.name.toLowerCase())}
                         className={`p-3 rounded-xl border-2 text-center font-bengali font-bold text-sm transition-all ${
                           isActive ? 'border-primary bg-primary/10 scale-105 shadow-md' : 'border-border bg-background hover:border-primary/40'
                         }`}>
-                        <div className="text-2xl mb-1">{method.icon}</div>
+                        {logoSrc ? (
+                          <img src={logoSrc} alt={method.name} className="w-10 h-10 rounded-full object-cover mx-auto mb-1" />
+                        ) : (
+                          <div className="text-2xl mb-1">{method.icon}</div>
+                        )}
                         <div className={isActive ? 'text-primary' : 'text-foreground'}>{method.name}</div>
                       </button>
                     );
@@ -278,10 +295,13 @@ export default function JoiningForm({ formRef }: JoiningFormProps) {
                 )}
 
                 {isManual && (
-                  <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                  <div className="bg-green-50 border border-green-200 rounded-xl p-4 space-y-1">
                     <p className="font-bengali text-sm text-green-800 font-medium">
-                      সরাসরি হাতে হাতে টাকা দেওয়া যাবে। যোগাযোগ করুন।
+                      সরাসরি হাতে হাতে টাকা দেওয়া যাবে।
                     </p>
+                    {selectedMethod?.instruction && (
+                      <p className="font-bengali text-xs text-green-700 leading-relaxed">{selectedMethod.instruction}</p>
+                    )}
                   </div>
                 )}
               </div>
