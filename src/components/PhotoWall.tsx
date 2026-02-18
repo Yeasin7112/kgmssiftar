@@ -3,7 +3,11 @@ import { supabase } from "@/lib/supabase";
 import type { JoiningRequest } from "@/lib/supabase";
 import { Camera, RefreshCw } from "lucide-react";
 
-export default function PhotoWall() {
+interface PhotoWallProps {
+  onJoinClick?: () => void;
+}
+
+export default function PhotoWall({ onJoinClick }: PhotoWallProps) {
   const [photos, setPhotos] = useState<JoiningRequest[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -46,6 +50,19 @@ export default function PhotoWall() {
           <p className="font-bengali text-muted-foreground">
             অংশগ্রহণকারীদের ছবির গ্যালারি — {photos.length} জন
           </p>
+          {onJoinClick && (
+            <button
+              onClick={onJoinClick}
+              className="mt-5 inline-flex items-center gap-2 px-6 py-3 rounded-full font-bengali font-bold text-sm transition-all hover:scale-105 active:scale-95"
+              style={{
+                background: 'linear-gradient(135deg, hsl(44 85% 52%), hsl(38 90% 62%))',
+                color: 'hsl(158 70% 10%)',
+                boxShadow: '0 4px 20px hsl(44 80% 52% / 0.4)',
+              }}
+            >
+              🌙 এখনই রেজিষ্ট্রেশন করুন
+            </button>
+          )}
         </div>
 
         {loading ? (

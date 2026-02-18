@@ -126,10 +126,15 @@ export default function ShareCard({ participantName, participantBatch }: ShareCa
     // ── Bottom divider ──
     drawGoldDivider(ctx, W / 2, 670, 200);
 
+    // ── Visit URL ──
+    ctx.fillStyle = 'rgba(201,162,39,0.75)';
+    ctx.font = '14px serif';
+    ctx.fillText('রেজিষ্ট্রেশন করতে ভিজিট করুন: highschoolian.vercel.app', W / 2, 690);
+
     // ── Hashtag ──
     ctx.fillStyle = 'rgba(201,162,39,0.5)';
-    ctx.font = '15px serif';
-    ctx.fillText('#খেপুপাড়াইফতার২০২৬', W / 2, 698);
+    ctx.font = '14px serif';
+    ctx.fillText('#হাইস্কুলিয়ানইফতার', W / 2, 710);
 
     // ── Star dots ──
     const stars = [[120, 200], [680, 190], [90, 600], [710, 590], [130, 720], [670, 725]];
