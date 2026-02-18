@@ -1,6 +1,6 @@
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
 Deno.serve(async (req: Request) => {
@@ -14,21 +14,22 @@ Deno.serve(async (req: Request) => {
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) throw new Error('API key not configured');
 
-    const prompt = `Create a beautiful Islamic Iftar event invitation card image. 
-Design requirements:
-- Deep emerald green and gold color scheme, very rich and elegant
-- Large bold Bengali/Arabic style title: "খেপুপাড়া হাইস্কুলিয়ান ইফতার ২০২৬"
-- Subtitle: "২৮তম রমজান ইফতার মাহফিল"
-- Feature participant name prominently: "${name}" — ${batch}
-- Show "${participants_count} জন অংশগ্রহণকারী" 
-- Islamic geometric border patterns and crescent moon decorations
-- Ornate golden borders and ornamental dividers  
-- "খেপুপাড়া উপজেলা হাই স্কুল প্রাক্তন শিক্ষার্থী" text at bottom
-- "রমজান কারীম 🌙" at the bottom
-- Professional social media poster design, 1:1 square ratio
-- Elegant calligraphy-style text rendering
-- Warm lantern glow effects, mosque silhouette in background
-- Rich dark emerald background with golden text and ornaments`;
+    const prompt = `Create a beautiful Islamic Iftar event invitation card poster (1:1 square).
+Style: Rich dark emerald green (#0d3020) background with golden (#f5c842) ornamental borders.
+Include:
+- Elegant golden crescent moon and star at the top
+- Bold title in large text: "খেপুপাড়া হাইস্কুলিয়ান ইফতার ২০২৬"
+- Subtitle: "২৮শে রমজান · ১৮ই মার্চ ২০২৬"
+- Participant name in prominent gold text: "${name}"
+- Batch label: "${batch}"
+- Total participants: "${participants_count} জন অংশগ্রহণকারী"
+- Footer: "খেপুপাড়া উপজেলা হাই স্কুল প্রাক্তন শিক্ষার্থী"
+- Islamic geometric border pattern in gold
+- Warm glowing mosque silhouette in background
+Keep it elegant, professional, print-quality social media poster.`;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 25000);
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -36,32 +37,39 @@ Design requirements:
         'Authorization': `Bearer ${LOVABLE_API_KEY}`,
         'Content-Type': 'application/json',
       },
+      signal: controller.signal,
       body: JSON.stringify({
-        model: 'google/gemini-3-pro-image-preview',
+        model: 'google/gemini-2.5-flash-image',
         messages: [{ role: 'user', content: prompt }],
         modalities: ['image', 'text'],
       }),
     });
 
+    clearTimeout(timeoutId);
+
     if (!response.ok) {
       const err = await response.text();
-      throw new Error(`AI API error: ${err}`);
+      if (response.status === 429) throw new Error('রেট লিমিট পৌঁছে গেছে, একটু পরে আবার চেষ্টা করুন');
+      if (response.status === 402) throw new Error('AI ক্রেডিট শেষ, অ্যাডমিনকে জানান');
+      throw new Error(`AI error: ${response.status} - ${err.slice(0, 200)}`);
     }
 
     const data = await response.json();
     const imageData = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
 
-    if (!imageData) throw new Error('No image generated');
+    if (!imageData) throw new Error('ছবি তৈরি হয়নি, আবার চেষ্টা করুন');
 
-    // imageData is a base64 data URL — pass directly to client
     return new Response(JSON.stringify({ imageUrl: imageData }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error('Error generating card:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    const msg = error instanceof Error ? error.message : 'অজানা সমস্যা হয়েছে';
+    const isTimeout = error instanceof Error && error.name === 'AbortError';
+    console.error('Card generation error:', error);
+    return new Response(
+      JSON.stringify({ error: isTimeout ? 'সময় শেষ হয়ে গেছে, আবার চেষ্টা করুন' : msg }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
   }
 });
+
