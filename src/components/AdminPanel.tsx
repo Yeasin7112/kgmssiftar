@@ -56,6 +56,7 @@ export default function AdminPanel() {
   // Admin management state (super admin only)
   const [adminsList, setAdminsList] = useState<{id: string; email: string; user_id: string}[]>([]);
   const [newAdminEmail, setNewAdminEmail] = useState('');
+  const [newAdminPassword, setNewAdminPassword] = useState('');
   const [adminActionLoading, setAdminActionLoading] = useState(false);
   const [adminActionMsg, setAdminActionMsg] = useState('');
 
@@ -1324,35 +1325,42 @@ export default function AdminPanel() {
                 <Plus className="w-4 h-4 text-primary" /> নতুন অ্যাডমিন যোগ করুন
               </h3>
               <p className="font-bengali text-xs text-muted-foreground mb-4">
-                নতুন অ্যাডমিন যোগ করতে প্রথমে সেই ইমেইল দিয়ে একটি অ্যাকাউন্ট থাকতে হবে। অ্যাডমিন প্যানেলে লগইন করে অ্যাকাউন্ট তৈরি করুন, তারপর নিচে ইমেইল দিয়ে অ্যাডমিন রোল দিন।
+                নতুন অ্যাডমিনের ইমেইল ও পাসওয়ার্ড দিন। অ্যাকাউন্ট তৈরি হয়ে যাবে এবং সে সরাসরি অ্যাডমিন প্যানেলে লগইন করতে পারবেন।
               </p>
-              <div className="flex gap-3">
+              <div className="space-y-3">
                 <input
-                  className={inputCls + " flex-1"}
+                  className={inputCls}
                   type="email"
-                  placeholder="নতুন অ্যাডমিনের ইমেইল"
+                  placeholder="নতুন অ্যাডমিনের ইমেইল *"
                   value={newAdminEmail}
                   onChange={e => setNewAdminEmail(e.target.value)}
                 />
+                <input
+                  className={inputCls}
+                  type="password"
+                  placeholder="পাসওয়ার্ড (কমপক্ষে ৮ অক্ষর) *"
+                  value={newAdminPassword}
+                  onChange={e => setNewAdminPassword(e.target.value)}
+                />
                 <button
-                  disabled={adminActionLoading || !newAdminEmail.trim()}
+                  disabled={adminActionLoading || !newAdminEmail.trim() || newAdminPassword.length < 8}
                   onClick={async () => {
                     setAdminActionLoading(true);
                     setAdminActionMsg('');
                     try {
-                      // Find user by email via list users (service role needed — use edge function)
                       const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-admins`, {
                         method: 'POST',
                         headers: {
                           'Content-Type': 'application/json',
                           'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
                         },
-                        body: JSON.stringify({ action: 'add', email: newAdminEmail.trim() }),
+                        body: JSON.stringify({ action: 'create', email: newAdminEmail.trim(), password: newAdminPassword }),
                       });
                       const result = await res.json();
                       if (result.error) throw new Error(result.error);
-                      setAdminActionMsg(`✅ ${newAdminEmail} কে অ্যাডমিন করা হয়েছে`);
+                      setAdminActionMsg(`✅ "${newAdminEmail}" অ্যাডমিন হিসেবে তৈরি করা হয়েছে`);
                       setNewAdminEmail('');
+                      setNewAdminPassword('');
                       fetchAdminsList();
                     } catch (err) {
                       setAdminActionMsg(`❌ ${err instanceof Error ? err.message : 'সমস্যা হয়েছে'}`);
@@ -1360,9 +1368,9 @@ export default function AdminPanel() {
                       setAdminActionLoading(false);
                     }
                   }}
-                  className="px-4 py-2 rounded-xl font-bengali text-sm bg-primary text-primary-foreground hover:opacity-90 transition disabled:opacity-50 whitespace-nowrap"
+                  className="w-full py-2.5 rounded-xl font-bengali text-sm bg-primary text-primary-foreground hover:opacity-90 transition disabled:opacity-50"
                 >
-                  {adminActionLoading ? '...' : 'অ্যাডমিন করুন'}
+                  {adminActionLoading ? '⏳ তৈরি হচ্ছে...' : '➕ অ্যাডমিন অ্যাকাউন্ট তৈরি করুন'}
                 </button>
               </div>
               {adminActionMsg && (
