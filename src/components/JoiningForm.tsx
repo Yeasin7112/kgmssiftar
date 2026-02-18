@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { Upload, User, CreditCard, Hash, Phone } from "lucide-react";
+import { Upload, User, CreditCard, Hash, Phone, AlertTriangle } from "lucide-react";
 import bkashLogo from "@/assets/bkash-logo.jpeg";
 import nagadLogo from "@/assets/nagad-logo.jpeg";
 import rocketLogo from "@/assets/rocket-logo.png";
@@ -16,10 +16,12 @@ interface PaymentMethod {
   type: string;
   icon: string;
   instruction: string;
+  warning: string;
 }
 
 export default function JoiningForm({ formRef }: JoiningFormProps) {
   const [name, setName] = useState('');
+  const [mobileNumber, setMobileNumber] = useState('');
   const [sscBatch, setSscBatch] = useState('');
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string>('');
@@ -99,6 +101,7 @@ export default function JoiningForm({ formRef }: JoiningFormProps) {
         payment_method: paymentMethod,
         payment_number: paymentNumber.trim() || null,
         transaction_id: transactionId.trim() || null,
+        mobile_number: mobileNumber.trim() || null,
       });
 
       if (insertError) throw insertError;
@@ -106,6 +109,7 @@ export default function JoiningForm({ formRef }: JoiningFormProps) {
       setSuccess(true);
       setName(''); setSscBatch(''); setPhotoFile(null); setPhotoPreview('');
       setPaymentAmount(100); setPaymentNumber(''); setTransactionId('');
+      setMobileNumber('');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'কিছু একটা সমস্যা হয়েছে, আবার চেষ্টা করুন';
       setError(msg);
@@ -176,6 +180,16 @@ export default function JoiningForm({ formRef }: JoiningFormProps) {
               </label>
               <input type="text" value={name} onChange={e => setName(e.target.value)}
                 placeholder="পূর্ণ নাম লিখুন" maxLength={100} className={inputCls} />
+            </div>
+
+            {/* Mobile Number */}
+            <div>
+              <label className="font-bengali text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+                <Phone className="w-4 h-4 text-primary" />
+                মোবাইল নম্বর *
+              </label>
+              <input type="tel" value={mobileNumber} onChange={e => setMobileNumber(e.target.value)}
+                placeholder="01XXXXXXXXX" maxLength={15} className={inputCls} />
             </div>
 
             {/* SSC Batch */}
@@ -282,18 +296,27 @@ export default function JoiningForm({ formRef }: JoiningFormProps) {
                 </div>
 
                 {selectedMethod && !isManual && (
-                  <div className="bg-primary/5 rounded-xl p-4 border border-primary/20 space-y-2">
-                    <p className="font-bengali text-sm text-foreground">
-                      <span className="font-semibold text-primary">{selectedMethod.name}</span> নম্বরে ৳{paymentAmount} পাঠান
-                    </p>
-                    <p className="font-display font-bold text-xl text-primary">{selectedMethod.number}</p>
-                    {selectedMethod.instruction && (
-                      <div className="bg-primary/10 rounded-lg px-3 py-2 mt-1">
-                        <p className="font-bengali text-xs text-primary font-medium mb-1">নির্দেশনা:</p>
-                        <p className="font-bengali text-xs text-foreground leading-relaxed">{selectedMethod.instruction}</p>
+                  <div className="space-y-2">
+                    {/* Warning banner */}
+                    {selectedMethod.warning && (
+                      <div className="flex items-center gap-2 bg-amber-50 border border-amber-300 rounded-xl px-4 py-3">
+                        <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                        <p className="font-bengali text-sm text-amber-800 font-semibold">{selectedMethod.warning}</p>
                       </div>
                     )}
-                    <p className="font-bengali text-xs text-muted-foreground">পেমেন্টের পর নিচে তথ্য পূরণ করুন</p>
+                    <div className="bg-primary/5 rounded-xl p-4 border border-primary/20 space-y-2">
+                      <p className="font-bengali text-sm text-foreground">
+                        <span className="font-semibold text-primary">{selectedMethod.name}</span> নম্বরে ৳{paymentAmount} পাঠান
+                      </p>
+                      <p className="font-display font-bold text-xl text-primary">{selectedMethod.number}</p>
+                      {selectedMethod.instruction && (
+                        <div className="bg-primary/10 rounded-lg px-3 py-2 mt-1">
+                          <p className="font-bengali text-xs text-primary font-medium mb-1">নির্দেশনা:</p>
+                          <p className="font-bengali text-xs text-foreground leading-relaxed">{selectedMethod.instruction}</p>
+                        </div>
+                      )}
+                      <p className="font-bengali text-xs text-muted-foreground">পেমেন্টের পর নিচে তথ্য পূরণ করুন</p>
+                    </div>
                   </div>
                 )}
 

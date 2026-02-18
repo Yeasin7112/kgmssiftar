@@ -11,6 +11,7 @@ interface PaymentMethod {
   type: string;
   icon: string;
   instruction: string;
+  warning: string;
   is_active: boolean;
   sort_order: number;
 }
@@ -63,7 +64,7 @@ export default function AdminPanel() {
   // Payment methods state
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [editingPayment, setEditingPayment] = useState<PaymentMethod | null>(null);
-  const [newPayment, setNewPayment] = useState({ name: '', number: '', type: 'সেন্ড মানি', icon: '📱', instruction: '' });
+  const [newPayment, setNewPayment] = useState({ name: '', number: '', type: 'সেন্ড মানি', icon: '📱', instruction: '', warning: '' });
   const [showAddPayment, setShowAddPayment] = useState(false);
 
   // Committee state
@@ -79,7 +80,7 @@ export default function AdminPanel() {
   const editMemberPhotoRef = useRef<HTMLInputElement>(null);
 
   // Manual participant state
-  const [newParticipant, setNewParticipant] = useState({ name: '', ssc_batch: '', payment_amount: '100' });
+  const [newParticipant, setNewParticipant] = useState({ name: '', ssc_batch: '', payment_amount: '100', mobile_number: '' });
   const [participantPhotoFile, setParticipantPhotoFile] = useState<File | null>(null);
   const [participantPhotoPreview, setParticipantPhotoPreview] = useState('');
   const [participantSaving, setParticipantSaving] = useState(false);
@@ -235,10 +236,11 @@ export default function AdminPanel() {
   };
 
   const downloadCSV = (list: JoiningRequest[]) => {
-    const header = 'ক্রমিক,নাম,ব্যাচ,পেমেন্ট পদ্ধতি,পরিমাণ (৳),তারিখ';
-    const rows = list.map((r, i) =>
-      `${i + 1},"${r.name}",${r.ssc_batch},"${r.payment_method}",${r.payment_amount},"${new Date(r.created_at).toLocaleDateString('bn-BD')}"`
-    );
+    const header = 'ক্রমিক,নাম,মোবাইল,ব্যাচ,পেমেন্ট পদ্ধতি,পরিমাণ (৳),তারিখ';
+    const rows = list.map((r, i) => {
+      const mobile = (r as JoiningRequest & { mobile_number?: string }).mobile_number || '';
+      return `${i + 1},"${r.name}","${mobile}",${r.ssc_batch},"${r.payment_method}",${r.payment_amount},"${new Date(r.created_at).toLocaleDateString('bn-BD')}"`;
+    });
     const csv = '\uFEFF' + [header, ...rows].join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -256,14 +258,18 @@ export default function AdminPanel() {
 
     const groupedHTML = batches.map(batch => {
       const members = list.filter(r => r.ssc_batch === batch);
-      const rows = members.map((r, i) => `
+      const rows = members.map((r, i) => {
+        const mobile = (r as JoiningRequest & { mobile_number?: string }).mobile_number || '—';
+        return `
         <tr>
           <td style="padding:6px 10px;border:1px solid #ccc;text-align:center;">${i + 1}</td>
           <td style="padding:6px 10px;border:1px solid #ccc;">${r.name}</td>
+          <td style="padding:6px 10px;border:1px solid #ccc;text-align:center;">${mobile}</td>
           <td style="padding:6px 10px;border:1px solid #ccc;text-align:center;">${r.payment_method}</td>
           <td style="padding:6px 10px;border:1px solid #ccc;text-align:center;">৳${r.payment_amount}</td>
           <td style="padding:6px 10px;border:1px solid #ccc;"></td>
-        </tr>`).join('');
+        </tr>`;
+      }).join('');
       return `
         <div style="margin-bottom:32px;page-break-inside:avoid;">
           <h3 style="background:#1a4731;color:#f5c842;padding:8px 16px;margin:0 0 0 0;font-size:16px;border-radius:4px 4px 0 0;">
@@ -274,6 +280,7 @@ export default function AdminPanel() {
               <tr style="background:#f0f0f0;">
                 <th style="padding:6px 10px;border:1px solid #ccc;width:40px;">ক্রমিক</th>
                 <th style="padding:6px 10px;border:1px solid #ccc;text-align:left;">নাম</th>
+                <th style="padding:6px 10px;border:1px solid #ccc;width:110px;">মোবাইল</th>
                 <th style="padding:6px 10px;border:1px solid #ccc;width:100px;">পেমেন্ট</th>
                 <th style="padding:6px 10px;border:1px solid #ccc;width:80px;">পরিমাণ</th>
                 <th style="padding:6px 10px;border:1px solid #ccc;width:80px;">স্বাক্ষর</th>
@@ -354,7 +361,7 @@ export default function AdminPanel() {
       setEditingPayment(null);
     } else {
       await supabase.from('payment_methods').insert({ ...newPayment, sort_order: paymentMethods.length + 1 });
-      setNewPayment({ name: '', number: '', type: 'সেন্ড মানি', icon: '📱', instruction: '' });
+      setNewPayment({ name: '', number: '', type: 'সেন্ড মানি', icon: '📱', instruction: '', warning: '' });
       setShowAddPayment(false);
     }
     fetchPaymentMethods();
@@ -463,12 +470,13 @@ export default function AdminPanel() {
         payment_method: 'manual',
         status: 'approved',
         added_by: session?.user?.email || null,
+        mobile_number: newParticipant.mobile_number.trim() || null,
       });
 
       if (error) throw error;
 
       setParticipantSuccess(`✅ "${newParticipant.name}" সফলভাবে তালিকায় যুক্ত হয়েছে`);
-      setNewParticipant({ name: '', ssc_batch: '', payment_amount: '100' });
+      setNewParticipant({ name: '', ssc_batch: '', payment_amount: '100', mobile_number: '' });
       setParticipantPhotoFile(null);
       setParticipantPhotoPreview('');
     } catch (err: unknown) {
@@ -706,9 +714,15 @@ export default function AdminPanel() {
                               <p className="text-xs font-bengali text-muted-foreground">মাধ্যম</p>
                               <p className="font-bengali font-semibold text-foreground capitalize">{req.payment_method}</p>
                             </div>
+                            {(req as JoiningRequest & { mobile_number?: string }).mobile_number && (
+                              <div className="bg-muted/50 rounded-lg px-3 py-2">
+                                <p className="text-xs font-bengali text-muted-foreground">মোবাইল</p>
+                                <p className="font-semibold text-foreground text-xs">{(req as JoiningRequest & { mobile_number?: string }).mobile_number}</p>
+                              </div>
+                            )}
                             {req.payment_number && (
                               <div className="bg-muted/50 rounded-lg px-3 py-2">
-                                <p className="text-xs font-bengali text-muted-foreground">নম্বর</p>
+                                <p className="text-xs font-bengali text-muted-foreground">পেমেন্ট নম্বর</p>
                                 <p className="font-semibold text-foreground text-xs">{req.payment_number}</p>
                               </div>
                             )}
@@ -803,7 +817,18 @@ export default function AdminPanel() {
                 </select>
               </div>
 
-              {/* Payment amount */}
+              {/* Mobile Number */}
+              <div>
+                <label className="font-bengali text-sm font-semibold text-foreground mb-2 block">মোবাইল নম্বর (ঐচ্ছিক)</label>
+                <input
+                  type="tel"
+                  className={inputCls}
+                  placeholder="01XXXXXXXXX"
+                  value={newParticipant.mobile_number}
+                  onChange={e => setNewParticipant({ ...newParticipant, mobile_number: e.target.value })}
+                  maxLength={15}
+                />
+              </div>
               <div>
                 <label className="font-bengali text-sm font-semibold text-foreground mb-2 block">চাঁদার পরিমাণ (টাকা)</label>
                 <input
@@ -879,6 +904,7 @@ export default function AdminPanel() {
                   <input className={inputCls} placeholder="ধরন (যেমন: সেন্ড মানি)" value={newPayment.type} onChange={e => setNewPayment({...newPayment, type: e.target.value})} />
                 </div>
                 <textarea className={inputCls + " h-20 resize-none"} placeholder="নির্দেশনা → ধাপ → পরবর্তী ধাপ" value={newPayment.instruction} onChange={e => setNewPayment({...newPayment, instruction: e.target.value})} />
+                <input className={inputCls} placeholder="⚠️ সতর্কতা (যেমন: বিকাশ থেকে সেন্ড মানি করবেন)" value={newPayment.warning} onChange={e => setNewPayment({...newPayment, warning: e.target.value})} />
                 <div className="flex gap-2">
                   <button onClick={savePaymentMethod} className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-xl font-bengali text-sm hover:opacity-90 transition">
                     <Save className="w-4 h-4" />সংরক্ষণ
@@ -899,7 +925,8 @@ export default function AdminPanel() {
                         <input className={inputCls} value={editingPayment.number} onChange={e => setEditingPayment({...editingPayment, number: e.target.value})} />
                         <input className={inputCls} value={editingPayment.type} onChange={e => setEditingPayment({...editingPayment, type: e.target.value})} />
                       </div>
-                      <textarea className={inputCls + " h-20 resize-none"} value={editingPayment.instruction} onChange={e => setEditingPayment({...editingPayment, instruction: e.target.value})} />
+                      <textarea className={inputCls + " h-20 resize-none"} placeholder="নির্দেশনা" value={editingPayment.instruction} onChange={e => setEditingPayment({...editingPayment, instruction: e.target.value})} />
+                      <input className={inputCls} placeholder="⚠️ সতর্কতা (যেমন: বিকাশ থেকে সেন্ড মানি করবেন)" value={editingPayment.warning || ''} onChange={e => setEditingPayment({...editingPayment, warning: e.target.value})} />
                       <div className="flex gap-2">
                         <button onClick={savePaymentMethod} className="flex items-center gap-2 bg-primary text-primary-foreground px-3 py-1.5 rounded-lg font-bengali text-sm hover:opacity-90 transition">
                           <Save className="w-3.5 h-3.5" />সংরক্ষণ

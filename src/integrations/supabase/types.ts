@@ -91,6 +91,7 @@ export type Database = {
           added_by: string | null
           created_at: string
           id: string
+          mobile_number: string | null
           name: string
           payment_amount: number
           payment_method: string
@@ -105,6 +106,7 @@ export type Database = {
           added_by?: string | null
           created_at?: string
           id?: string
+          mobile_number?: string | null
           name: string
           payment_amount?: number
           payment_method?: string
@@ -119,6 +121,7 @@ export type Database = {
           added_by?: string | null
           created_at?: string
           id?: string
+          mobile_number?: string | null
           name?: string
           payment_amount?: number
           payment_method?: string
@@ -143,6 +146,7 @@ export type Database = {
           sort_order: number
           type: string
           updated_at: string
+          warning: string | null
         }
         Insert: {
           created_at?: string
@@ -155,6 +159,7 @@ export type Database = {
           sort_order?: number
           type: string
           updated_at?: string
+          warning?: string | null
         }
         Update: {
           created_at?: string
@@ -167,6 +172,7 @@ export type Database = {
           sort_order?: number
           type?: string
           updated_at?: string
+          warning?: string | null
         }
         Relationships: []
       }
