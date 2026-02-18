@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      committee_members: {
+        Row: {
+          created_at: string
+          facebook_url: string | null
+          id: string
+          name: string
+          phone: string | null
+          photo_url: string | null
+          role: string
+          sort_order: number
+          ssc_batch: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          facebook_url?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          photo_url?: string | null
+          role: string
+          sort_order?: number
+          ssc_batch?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          facebook_url?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          photo_url?: string | null
+          role?: string
+          sort_order?: number
+          ssc_batch?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       joining_requests: {
         Row: {
           created_at: string
@@ -52,6 +91,45 @@ export type Database = {
           ssc_batch?: number
           status?: string
           transaction_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      payment_methods: {
+        Row: {
+          created_at: string
+          icon: string
+          id: string
+          instruction: string
+          is_active: boolean
+          name: string
+          number: string
+          sort_order: number
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          icon?: string
+          id?: string
+          instruction: string
+          is_active?: boolean
+          name: string
+          number: string
+          sort_order?: number
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          icon?: string
+          id?: string
+          instruction?: string
+          is_active?: boolean
+          name?: string
+          number?: string
+          sort_order?: number
+          type?: string
           updated_at?: string
         }
         Relationships: []
