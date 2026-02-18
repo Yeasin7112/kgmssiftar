@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 export default function Header() {
   return (
-    <header className="relative gradient-hero islamic-pattern overflow-hidden">
+    <header className="relative overflow-hidden" style={{ background: 'linear-gradient(135deg, hsl(158 80% 8%) 0%, hsl(158 70% 16%) 50%, hsl(38 65% 16%) 100%)' }}>
       {/* Admin link */}
       <div className="absolute top-3 right-4 z-20">
         <Link
