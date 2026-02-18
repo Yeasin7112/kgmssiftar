@@ -55,7 +55,7 @@ export default function Header() {
 
         {/* School name subtitle */}
         <p className="text-emerald-200 font-bengali text-base md:text-lg opacity-80">
-          খেপুপাড়া উপজেলা হাই স্কুল — প্রাক্তন শিক্ষার্থীদের মহামিলন
+          খেপুপাড়া সরকারি মডেল মাধ্যমিক বিদ্যালয় — প্রাক্তন শিক্ষার্থীদের মহামিলন
         </p>
 
         {/* Bottom ornament */}
