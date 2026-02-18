@@ -154,6 +154,9 @@ export default function JoiningForm({ formRef }: JoiningFormProps) {
           <p className="font-bengali text-muted-foreground">
             আপনার তথ্য পূরণ করুন এবং পেমেন্ট করে রেজিস্ট্রেশন সম্পন্ন করুন
           </p>
+          <div className="mt-4 inline-flex items-center gap-2 bg-destructive/10 border border-destructive/40 text-destructive rounded-full px-5 py-2.5 font-bengali font-bold text-sm animate-pulse">
+            ⏰ রেজিষ্ট্রেশন এর শেষ সময় — ১৫ই মার্চ (২৫ রমজান)
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="shadow-card rounded-2xl border border-border overflow-hidden bg-card">
