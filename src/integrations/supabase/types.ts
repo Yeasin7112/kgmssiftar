@@ -19,6 +19,7 @@ export type Database = {
           created_at: string
           facebook_url: string | null
           id: string
+          is_pinned: boolean
           name: string
           phone: string | null
           photo_url: string | null
@@ -31,6 +32,7 @@ export type Database = {
           created_at?: string
           facebook_url?: string | null
           id?: string
+          is_pinned?: boolean
           name: string
           phone?: string | null
           photo_url?: string | null
@@ -43,6 +45,7 @@ export type Database = {
           created_at?: string
           facebook_url?: string | null
           id?: string
+          is_pinned?: boolean
           name?: string
           phone?: string | null
           photo_url?: string | null
@@ -85,6 +88,7 @@ export type Database = {
       }
       joining_requests: {
         Row: {
+          added_by: string | null
           created_at: string
           id: string
           name: string
@@ -98,6 +102,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          added_by?: string | null
           created_at?: string
           id?: string
           name: string
@@ -111,6 +116,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          added_by?: string | null
           created_at?: string
           id?: string
           name?: string

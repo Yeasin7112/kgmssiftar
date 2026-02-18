@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import type { JoiningRequest } from "@/lib/supabase";
-import { Check, X, LogOut, RefreshCw, Eye, Users, Clock, CheckCircle, CreditCard, UserCheck, Plus, Trash2, Edit2, Save, Upload, UserPlus, Printer, Download, Image as ImageIcon, Camera } from "lucide-react";
+import { Check, X, LogOut, RefreshCw, Eye, Users, Clock, CheckCircle, CreditCard, UserCheck, Plus, Trash2, Edit2, Save, Upload, UserPlus, Printer, Download, Image as ImageIcon, Camera, Pin, Shield } from "lucide-react";
 import { Session } from "@supabase/supabase-js";
 
 interface PaymentMethod {
@@ -24,9 +24,10 @@ interface CommitteeMember {
   photo_url?: string;
   ssc_batch?: number;
   sort_order: number;
+  is_pinned?: boolean;
 }
 
-type AdminTab = 'requests' | 'payments' | 'committee' | 'members' | 'print' | 'gallery';
+type AdminTab = 'requests' | 'payments' | 'committee' | 'members' | 'print' | 'gallery' | 'admins';
 
 interface EventPhoto {
   id: string;
@@ -48,8 +49,15 @@ export default function AdminPanel() {
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
   const [searchQuery, setSearchQuery] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [activeTab, setActiveTab] = useState<AdminTab>('requests');
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Admin management state (super admin only)
+  const [adminsList, setAdminsList] = useState<{id: string; email: string; user_id: string}[]>([]);
+  const [newAdminEmail, setNewAdminEmail] = useState('');
+  const [adminActionLoading, setAdminActionLoading] = useState(false);
+  const [adminActionMsg, setAdminActionMsg] = useState('');
 
   // Payment methods state
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
@@ -107,7 +115,13 @@ export default function AdminPanel() {
 
   const checkAdmin = async (userId: string) => {
     const { data } = await supabase.from('user_roles').select('role').eq('user_id', userId).single();
-    setIsAdmin(data?.role === 'admin');
+    const adminOk = data?.role === 'admin';
+    setIsAdmin(adminOk);
+    if (adminOk) {
+      // Super admin is admin@gmail.com
+      const { data: { user } } = await supabase.auth.getUser();
+      setIsSuperAdmin(user?.email === 'admin@gmail.com');
+    }
   };
 
   useEffect(() => {
@@ -117,8 +131,9 @@ export default function AdminPanel() {
       fetchCommittee();
       fetchApprovedList();
       fetchEventPhotos();
+      if (isSuperAdmin) fetchAdminsList();
     }
-  }, [session, isAdmin, filter]);
+  }, [session, isAdmin, isSuperAdmin, filter]);
 
   const fetchRequests = async () => {
     setLoading(true);
@@ -155,6 +170,24 @@ export default function AdminPanel() {
     const { data } = await supabase.from('event_photos').select('*').order('sort_order', { ascending: true });
     setEventPhotos((data as EventPhoto[]) || []);
     setGalleryLoading(false);
+  };
+
+  const fetchAdminsList = async () => {
+    try {
+      const session = (await supabase.auth.getSession()).data.session;
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-admins`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({ action: 'list' }),
+      });
+      const result = await res.json();
+      setAdminsList(result.admins || []);
+    } catch {
+      setAdminsList([]);
+    }
   };
 
   const handleGalleryFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -382,6 +415,11 @@ export default function AdminPanel() {
     fetchCommittee();
   };
 
+  const togglePinMember = async (m: CommitteeMember) => {
+    await supabase.from('committee_members').update({ is_pinned: !m.is_pinned }).eq('id', m.id);
+    fetchCommittee();
+  };
+
   const handleMemberPhotoChange = (e: React.ChangeEvent<HTMLInputElement>, isEdit = false) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -423,6 +461,7 @@ export default function AdminPanel() {
         payment_amount: parseInt(newParticipant.payment_amount) || 100,
         payment_method: 'manual',
         status: 'approved',
+        added_by: session?.user?.email || null,
       });
 
       if (error) throw error;
@@ -516,8 +555,9 @@ export default function AdminPanel() {
             { key: 'committee', label: 'কমিটি', icon: UserCheck },
             { key: 'print', label: 'প্রিন্ট', icon: Printer },
             { key: 'gallery', label: 'গ্যালারি', icon: Camera },
+            ...(isSuperAdmin ? [{ key: 'admins', label: 'অ্যাডমিন', icon: Shield }] : []),
           ] as const).map(tab => (
-            <button key={tab.key} onClick={() => setActiveTab(tab.key)}
+            <button key={tab.key} onClick={() => setActiveTab(tab.key as AdminTab)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bengali transition whitespace-nowrap ${activeTab === tab.key ? 'bg-white/20 text-white' : 'text-white/60 hover:bg-white/10'}`}>
               <tab.icon className="w-3.5 h-3.5" />
               {tab.label}
@@ -678,7 +718,14 @@ export default function AdminPanel() {
                               </div>
                             )}
                           </div>
-                          <p className="text-xs text-muted-foreground mt-2">{new Date(req.created_at).toLocaleString('bn-BD')}</p>
+                          <div className="flex items-center gap-3 flex-wrap mt-1">
+                            <p className="text-xs text-muted-foreground">{new Date(req.created_at).toLocaleString('bn-BD')}</p>
+                            {(req as JoiningRequest & { added_by?: string }).added_by && (
+                              <span className="text-xs text-blue-500 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-full font-bengali">
+                                ➕ added by {(req as JoiningRequest & { added_by?: string }).added_by}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -991,6 +1038,13 @@ export default function AdminPanel() {
                         {m.facebook_url && <p className="text-xs text-blue-500 truncate">{m.facebook_url}</p>}
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
+                        <button
+                          onClick={() => togglePinMember(m)}
+                          className={`p-1.5 rounded-lg transition ${m.is_pinned ? 'bg-amber-100 text-amber-600' : 'bg-muted text-muted-foreground hover:bg-border'}`}
+                          title={m.is_pinned ? 'পিন সরান' : 'পিন করুন'}
+                        >
+                          <Pin className="w-3.5 h-3.5" />
+                        </button>
                         <button onClick={() => { setEditingMember(m); setEditMemberPhotoPreview(''); setEditMemberPhotoFile(null); }} className="p-1.5 rounded-lg bg-muted hover:bg-border transition">
                           <Edit2 className="w-3.5 h-3.5 text-muted-foreground" />
                         </button>
@@ -1248,6 +1302,130 @@ export default function AdminPanel() {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* ===== ADMIN MANAGEMENT TAB (super admin only) ===== */}
+        {activeTab === 'admins' && isSuperAdmin && (
+          <div className="max-w-2xl mx-auto">
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <Shield className="w-8 h-8 text-primary" />
+              </div>
+              <h2 className="font-bengali text-2xl font-bold text-foreground mb-2">অ্যাডমিন ম্যানেজমেন্ট</h2>
+              <p className="font-bengali text-muted-foreground text-sm">
+                নতুন অ্যাডমিন যোগ করুন বা বিদ্যমান অ্যাডমিন সরিয়ে দিন। শুধুমাত্র সুপার অ্যাডমিনের অ্যাক্সেস।
+              </p>
+            </div>
+
+            {/* Add new admin */}
+            <div className="bg-card rounded-2xl border border-border shadow-card p-6 mb-6">
+              <h3 className="font-bengali font-bold text-foreground mb-4 flex items-center gap-2">
+                <Plus className="w-4 h-4 text-primary" /> নতুন অ্যাডমিন যোগ করুন
+              </h3>
+              <p className="font-bengali text-xs text-muted-foreground mb-4">
+                নতুন অ্যাডমিন যোগ করতে প্রথমে সেই ইমেইল দিয়ে একটি অ্যাকাউন্ট থাকতে হবে। অ্যাডমিন প্যানেলে লগইন করে অ্যাকাউন্ট তৈরি করুন, তারপর নিচে ইমেইল দিয়ে অ্যাডমিন রোল দিন।
+              </p>
+              <div className="flex gap-3">
+                <input
+                  className={inputCls + " flex-1"}
+                  type="email"
+                  placeholder="নতুন অ্যাডমিনের ইমেইল"
+                  value={newAdminEmail}
+                  onChange={e => setNewAdminEmail(e.target.value)}
+                />
+                <button
+                  disabled={adminActionLoading || !newAdminEmail.trim()}
+                  onClick={async () => {
+                    setAdminActionLoading(true);
+                    setAdminActionMsg('');
+                    try {
+                      // Find user by email via list users (service role needed — use edge function)
+                      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-admins`, {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+                        },
+                        body: JSON.stringify({ action: 'add', email: newAdminEmail.trim() }),
+                      });
+                      const result = await res.json();
+                      if (result.error) throw new Error(result.error);
+                      setAdminActionMsg(`✅ ${newAdminEmail} কে অ্যাডমিন করা হয়েছে`);
+                      setNewAdminEmail('');
+                      fetchAdminsList();
+                    } catch (err) {
+                      setAdminActionMsg(`❌ ${err instanceof Error ? err.message : 'সমস্যা হয়েছে'}`);
+                    } finally {
+                      setAdminActionLoading(false);
+                    }
+                  }}
+                  className="px-4 py-2 rounded-xl font-bengali text-sm bg-primary text-primary-foreground hover:opacity-90 transition disabled:opacity-50 whitespace-nowrap"
+                >
+                  {adminActionLoading ? '...' : 'অ্যাডমিন করুন'}
+                </button>
+              </div>
+              {adminActionMsg && (
+                <p className="font-bengali text-sm mt-3">{adminActionMsg}</p>
+              )}
+            </div>
+
+            {/* Current admins list */}
+            <div className="bg-card rounded-2xl border border-border shadow-card p-6">
+              <h3 className="font-bengali font-bold text-foreground mb-4">বর্তমান অ্যাডমিনগণ</h3>
+              <div className="space-y-3">
+                {adminsList.map(admin => (
+                  <div key={admin.id} className="flex items-center justify-between gap-3 p-3 bg-muted/30 rounded-xl border border-border">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Shield className="w-4 h-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-bengali text-sm font-semibold text-foreground">
+                          {admin.email}
+                          {admin.email === 'admin@gmail.com' && (
+                            <span className="ml-2 text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full border border-amber-200">সুপার অ্যাডমিন</span>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                    {admin.email !== 'admin@gmail.com' && (
+                      <button
+                        onClick={async () => {
+                          if (!window.confirm(`${admin.email} কে অ্যাডমিন থেকে সরিয়ে দেবেন?`)) return;
+                          setAdminActionLoading(true);
+                          try {
+                            const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-admins`, {
+                              method: 'POST',
+                              headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+                              },
+                              body: JSON.stringify({ action: 'remove', userId: admin.user_id }),
+                            });
+                            const result = await res.json();
+                            if (result.error) throw new Error(result.error);
+                            setAdminActionMsg(`✅ অ্যাডমিন সরিয়ে দেওয়া হয়েছে`);
+                            fetchAdminsList();
+                          } catch (err) {
+                            setAdminActionMsg(`❌ ${err instanceof Error ? err.message : 'সমস্যা হয়েছে'}`);
+                          } finally {
+                            setAdminActionLoading(false);
+                          }
+                        }}
+                        className="p-1.5 rounded-lg bg-red-50 hover:bg-red-100 transition flex-shrink-0"
+                        title="অ্যাডমিন সরিয়ে দিন"
+                      >
+                        <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+                {adminsList.length === 0 && (
+                  <p className="font-bengali text-sm text-muted-foreground text-center py-4">লোড হচ্ছে...</p>
+                )}
+              </div>
+            </div>
           </div>
         )}
 

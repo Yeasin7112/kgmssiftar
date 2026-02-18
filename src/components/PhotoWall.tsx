@@ -71,17 +71,17 @@ export default function PhotoWall({ onJoinClick }: PhotoWallProps) {
             <p className="font-bengali text-muted-foreground">লোড হচ্ছে...</p>
           </div>
         ) : (
-          <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-3 space-y-3">
+          <div className="flex gap-3 overflow-x-auto pb-4 snap-x snap-mandatory">
             {photos.map((p, i) => (
               <div
                 key={p.id}
-                className="break-inside-avoid rounded-2xl overflow-hidden border border-border shadow-card group relative cursor-pointer"
+                className="flex-shrink-0 w-44 rounded-2xl overflow-hidden border border-border shadow-card group relative cursor-pointer snap-start"
                 style={{ animationDelay: `${i * 60}ms` }}
               >
                 <img
                   src={p.photo_url!}
                   alt={p.name}
-                  className="w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  className="w-full h-52 object-cover group-hover:scale-105 transition-transform duration-500"
                   loading="lazy"
                 />
                 {/* Overlay */}
