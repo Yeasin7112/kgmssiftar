@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import type { JoiningRequest } from "@/lib/supabase";
-import { Check, X, LogOut, RefreshCw, Eye, Users, Clock, CheckCircle, CreditCard, UserCheck, Plus, Trash2, Edit2, Save } from "lucide-react";
+import { Check, X, LogOut, RefreshCw, Eye, Users, Clock, CheckCircle, CreditCard, UserCheck, Plus, Trash2, Edit2, Save, Upload } from "lucide-react";
 import { Session } from "@supabase/supabase-js";
 
 interface PaymentMethod {
@@ -21,6 +21,7 @@ interface CommitteeMember {
   role: string;
   phone?: string;
   facebook_url?: string;
+  photo_url?: string;
   ssc_batch?: number;
   sort_order: number;
 }
@@ -48,8 +49,14 @@ export default function AdminPanel() {
   // Committee state
   const [committee, setCommittee] = useState<CommitteeMember[]>([]);
   const [editingMember, setEditingMember] = useState<CommitteeMember | null>(null);
-  const [newMember, setNewMember] = useState({ name: '', role: '', phone: '', facebook_url: '', ssc_batch: '' });
+  const [newMember, setNewMember] = useState({ name: '', role: '', phone: '', facebook_url: '', ssc_batch: '', photo_url: '' });
   const [showAddMember, setShowAddMember] = useState(false);
+  const [memberPhotoFile, setMemberPhotoFile] = useState<File | null>(null);
+  const [memberPhotoPreview, setMemberPhotoPreview] = useState('');
+  const [editMemberPhotoFile, setEditMemberPhotoFile] = useState<File | null>(null);
+  const [editMemberPhotoPreview, setEditMemberPhotoPreview] = useState('');
+  const memberPhotoRef = useRef<HTMLInputElement>(null);
+  const editMemberPhotoRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     supabase.auth.onAuthStateChange((_, s) => {
@@ -136,18 +143,42 @@ export default function AdminPanel() {
     fetchPaymentMethods();
   };
 
+  // Upload member photo helper
+  const uploadMemberPhoto = async (file: File): Promise<string> => {
+    const ext = file.name.split('.').pop();
+    const fileName = `committee-${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from('participant-photos').upload(fileName, file);
+    if (error) throw error;
+    const { data: { publicUrl } } = supabase.storage.from('participant-photos').getPublicUrl(fileName);
+    return publicUrl;
+  };
+
   // Committee CRUD
   const saveCommitteeMember = async () => {
+    let photoUrl = newMember.photo_url;
+    if (memberPhotoFile) photoUrl = await uploadMemberPhoto(memberPhotoFile);
+
     if (editingMember) {
-      await supabase.from('committee_members').update(editingMember).eq('id', editingMember.id);
+      let editPhotoUrl: string | undefined = editingMember.photo_url;
+      if (editMemberPhotoFile) editPhotoUrl = await uploadMemberPhoto(editMemberPhotoFile);
+      const { id, sort_order: _so, ...rest } = editingMember;
+      await supabase.from('committee_members').update({ ...rest, photo_url: editPhotoUrl || null }).eq('id', id);
       setEditingMember(null);
+      setEditMemberPhotoFile(null);
+      setEditMemberPhotoPreview('');
     } else {
       await supabase.from('committee_members').insert({
-        ...newMember,
+        name: newMember.name,
+        role: newMember.role,
+        phone: newMember.phone || null,
+        facebook_url: newMember.facebook_url || null,
         ssc_batch: newMember.ssc_batch ? parseInt(newMember.ssc_batch) : null,
+        photo_url: photoUrl || null,
         sort_order: committee.length + 1,
       });
-      setNewMember({ name: '', role: '', phone: '', facebook_url: '', ssc_batch: '' });
+      setNewMember({ name: '', role: '', phone: '', facebook_url: '', ssc_batch: '', photo_url: '' });
+      setMemberPhotoFile(null);
+      setMemberPhotoPreview('');
       setShowAddMember(false);
     }
     fetchCommittee();
@@ -156,6 +187,17 @@ export default function AdminPanel() {
   const deleteCommitteeMember = async (id: string) => {
     await supabase.from('committee_members').delete().eq('id', id);
     fetchCommittee();
+  };
+
+  const handleMemberPhotoChange = (e: React.ChangeEvent<HTMLInputElement>, isEdit = false) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (isEdit) { setEditMemberPhotoFile(file); setEditMemberPhotoPreview(reader.result as string); }
+      else { setMemberPhotoFile(file); setMemberPhotoPreview(reader.result as string); }
+    };
+    reader.readAsDataURL(file);
   };
 
   const statusBadge = (status: string) => {
@@ -445,11 +487,34 @@ export default function AdminPanel() {
             </div>
 
             {showAddMember && (
-              <div className="bg-card rounded-2xl border border-border p-5 mb-6 space-y-3">
-                <h3 className="font-bengali font-bold text-foreground">নতুন সদস্য</h3>
+              <div className="bg-card rounded-2xl border border-border p-5 mb-6 space-y-4">
+                <h3 className="font-bengali font-bold text-foreground">নতুন সদস্য যোগ করুন</h3>
+
+                {/* Photo upload */}
+                <div>
+                  <label className="font-bengali text-sm font-medium text-foreground mb-2 block">ছবি (ঐচ্ছিক)</label>
+                  <div
+                    onClick={() => memberPhotoRef.current?.click()}
+                    className="border-2 border-dashed border-border rounded-xl p-4 text-center cursor-pointer hover:border-primary/50 transition bg-muted/30"
+                  >
+                    {memberPhotoPreview ? (
+                      <div className="flex flex-col items-center gap-2">
+                        <img src={memberPhotoPreview} alt="preview" className="w-20 h-20 rounded-full object-cover border-2 border-primary/30" />
+                        <p className="font-bengali text-xs text-muted-foreground">পরিবর্তন করতে ক্লিক করুন</p>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center gap-1 py-2">
+                        <Upload className="w-6 h-6 text-primary" />
+                        <p className="font-bengali text-xs text-muted-foreground">ছবি আপলোড করুন</p>
+                      </div>
+                    )}
+                  </div>
+                  <input ref={memberPhotoRef} type="file" accept="image/*" className="hidden" onChange={e => handleMemberPhotoChange(e, false)} />
+                </div>
+
                 <div className="grid grid-cols-2 gap-3">
-                  <input className={inputCls} placeholder="নাম" value={newMember.name} onChange={e => setNewMember({...newMember, name: e.target.value})} />
-                  <input className={inputCls} placeholder="পদবি (যেমন: সভাপতি)" value={newMember.role} onChange={e => setNewMember({...newMember, role: e.target.value})} />
+                  <input className={inputCls} placeholder="নাম *" value={newMember.name} onChange={e => setNewMember({...newMember, name: e.target.value})} />
+                  <input className={inputCls} placeholder="পদবি (যেমন: সভাপতি) *" value={newMember.role} onChange={e => setNewMember({...newMember, role: e.target.value})} />
                   <input className={inputCls} placeholder="মোবাইল নম্বর" value={newMember.phone} onChange={e => setNewMember({...newMember, phone: e.target.value})} />
                   <input className={inputCls} placeholder="SSC ব্যাচ (বছর)" value={newMember.ssc_batch} onChange={e => setNewMember({...newMember, ssc_batch: e.target.value})} />
                   <input className={inputCls + " col-span-2"} placeholder="Facebook URL (ঐচ্ছিক)" value={newMember.facebook_url} onChange={e => setNewMember({...newMember, facebook_url: e.target.value})} />
@@ -458,7 +523,7 @@ export default function AdminPanel() {
                   <button onClick={saveCommitteeMember} className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-xl font-bengali text-sm hover:opacity-90 transition">
                     <Save className="w-4 h-4" />সংরক্ষণ
                   </button>
-                  <button onClick={() => setShowAddMember(false)} className="px-4 py-2 rounded-xl font-bengali text-sm border border-border text-muted-foreground hover:bg-muted transition">বাতিল</button>
+                  <button onClick={() => { setShowAddMember(false); setMemberPhotoPreview(''); setMemberPhotoFile(null); }} className="px-4 py-2 rounded-xl font-bengali text-sm border border-border text-muted-foreground hover:bg-muted transition">বাতিল</button>
                 </div>
               </div>
             )}
@@ -468,9 +533,28 @@ export default function AdminPanel() {
                 <div key={m.id} className="bg-card rounded-2xl border border-border p-4">
                   {editingMember?.id === m.id ? (
                     <div className="space-y-3">
+                      {/* Edit photo */}
+                      <div
+                        onClick={() => editMemberPhotoRef.current?.click()}
+                        className="border-2 border-dashed border-border rounded-xl p-3 text-center cursor-pointer hover:border-primary/50 transition bg-muted/30"
+                      >
+                        {editMemberPhotoPreview || editingMember.photo_url ? (
+                          <div className="flex flex-col items-center gap-1">
+                            <img src={editMemberPhotoPreview || editingMember.photo_url} alt="preview" className="w-16 h-16 rounded-full object-cover border-2 border-primary/30" />
+                            <p className="font-bengali text-xs text-muted-foreground">পরিবর্তন করতে ক্লিক করুন</p>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-center gap-2 py-1">
+                            <Upload className="w-4 h-4 text-muted-foreground" />
+                            <p className="font-bengali text-xs text-muted-foreground">ছবি আপলোড করুন</p>
+                          </div>
+                        )}
+                      </div>
+                      <input ref={editMemberPhotoRef} type="file" accept="image/*" className="hidden" onChange={e => handleMemberPhotoChange(e, true)} />
+
                       <div className="grid grid-cols-2 gap-3">
-                        <input className={inputCls} value={editingMember.name} onChange={e => setEditingMember({...editingMember, name: e.target.value})} />
-                        <input className={inputCls} value={editingMember.role} onChange={e => setEditingMember({...editingMember, role: e.target.value})} />
+                        <input className={inputCls} value={editingMember.name} onChange={e => setEditingMember({...editingMember, name: e.target.value})} placeholder="নাম" />
+                        <input className={inputCls} value={editingMember.role} onChange={e => setEditingMember({...editingMember, role: e.target.value})} placeholder="পদবি" />
                         <input className={inputCls} value={editingMember.phone || ''} onChange={e => setEditingMember({...editingMember, phone: e.target.value})} placeholder="মোবাইল" />
                         <input className={inputCls} value={editingMember.ssc_batch?.toString() || ''} onChange={e => setEditingMember({...editingMember, ssc_batch: parseInt(e.target.value) || undefined})} placeholder="ব্যাচ" />
                         <input className={inputCls + " col-span-2"} value={editingMember.facebook_url || ''} onChange={e => setEditingMember({...editingMember, facebook_url: e.target.value})} placeholder="Facebook URL" />
@@ -479,21 +563,26 @@ export default function AdminPanel() {
                         <button onClick={saveCommitteeMember} className="flex items-center gap-2 bg-primary text-primary-foreground px-3 py-1.5 rounded-lg font-bengali text-sm hover:opacity-90 transition">
                           <Save className="w-3.5 h-3.5" />সংরক্ষণ
                         </button>
-                        <button onClick={() => setEditingMember(null)} className="px-3 py-1.5 rounded-lg font-bengali text-sm border border-border text-muted-foreground hover:bg-muted transition">বাতিল</button>
+                        <button onClick={() => { setEditingMember(null); setEditMemberPhotoFile(null); setEditMemberPhotoPreview(''); }} className="px-3 py-1.5 rounded-lg font-bengali text-sm border border-border text-muted-foreground hover:bg-muted transition">বাতিল</button>
                       </div>
                     </div>
                   ) : (
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        <span className="font-bold text-primary font-bengali">{m.name.charAt(0)}</span>
-                      </div>
-                      <div className="flex-1">
+                      {m.photo_url ? (
+                        <img src={m.photo_url} alt={m.name} className="w-12 h-12 rounded-full object-cover border-2 border-primary/20 flex-shrink-0" />
+                      ) : (
+                        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <span className="font-bold text-primary font-bengali">{m.name.charAt(0)}</span>
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
                         <p className="font-bengali font-bold text-foreground">{m.name}</p>
                         <p className="font-bengali text-sm text-muted-foreground">{m.role}{m.ssc_batch ? ` · ${m.ssc_batch} ব্যাচ` : ''}</p>
                         {m.phone && <p className="font-bengali-sans text-xs text-muted-foreground">{m.phone}</p>}
+                        {m.facebook_url && <p className="font-bengali-sans text-xs text-blue-500 truncate">{m.facebook_url}</p>}
                       </div>
-                      <div className="flex items-center gap-2">
-                        <button onClick={() => setEditingMember(m)} className="p-1.5 rounded-lg bg-muted hover:bg-border transition">
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <button onClick={() => { setEditingMember(m); setEditMemberPhotoPreview(''); setEditMemberPhotoFile(null); }} className="p-1.5 rounded-lg bg-muted hover:bg-border transition">
                           <Edit2 className="w-3.5 h-3.5 text-muted-foreground" />
                         </button>
                         <button onClick={() => deleteCommitteeMember(m.id)} className="p-1.5 rounded-lg bg-red-50 hover:bg-red-100 transition">

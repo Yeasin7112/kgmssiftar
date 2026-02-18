@@ -49,7 +49,7 @@ export default function Header() {
         <div className="inline-flex items-center gap-2 bg-amber-400/20 border border-amber-400/40 rounded-full px-5 py-2 mb-6">
           <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
           <span className="text-amber-300 font-bengali-sans text-sm font-medium">
-            রমজান ২০২৬ — ২৮তম রমজান
+            ২৮শে রমজান · ১৮ই মার্চ ২০২৬
           </span>
         </div>
 
