@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import type { JoiningRequest } from "@/lib/supabase";
-import { Check, X, LogOut, RefreshCw, Eye, Users, Clock, CheckCircle, CreditCard, UserCheck, Plus, Trash2, Edit2, Save, Upload, UserPlus, Printer, Download } from "lucide-react";
+import { Check, X, LogOut, RefreshCw, Eye, Users, Clock, CheckCircle, CreditCard, UserCheck, Plus, Trash2, Edit2, Save, Upload, UserPlus, Printer, Download, Image as ImageIcon, Camera } from "lucide-react";
 import { Session } from "@supabase/supabase-js";
 
 interface PaymentMethod {
@@ -26,7 +26,16 @@ interface CommitteeMember {
   sort_order: number;
 }
 
-type AdminTab = 'requests' | 'payments' | 'committee' | 'members' | 'print';
+type AdminTab = 'requests' | 'payments' | 'committee' | 'members' | 'print' | 'gallery';
+
+interface EventPhoto {
+  id: string;
+  photo_url: string;
+  caption?: string;
+  event_year?: number;
+  sort_order: number;
+  created_at: string;
+}
 
 export default function AdminPanel() {
   const [session, setSession] = useState<Session | null>(null);
@@ -75,6 +84,16 @@ export default function AdminPanel() {
   const [printLoading, setPrintLoading] = useState(false);
   const [printBatchFilter, setPrintBatchFilter] = useState<string>('all');
 
+  // Gallery state
+  const [eventPhotos, setEventPhotos] = useState<EventPhoto[]>([]);
+  const [galleryLoading, setGalleryLoading] = useState(false);
+  const [galleryUploading, setGalleryUploading] = useState(false);
+  const [galleryCaption, setGalleryCaption] = useState('');
+  const [galleryYear, setGalleryYear] = useState('');
+  const [galleryFile, setGalleryFile] = useState<File | null>(null);
+  const [galleryPreview, setGalleryPreview] = useState('');
+  const galleryFileRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     supabase.auth.onAuthStateChange((_, s) => {
       setSession(s);
@@ -97,6 +116,7 @@ export default function AdminPanel() {
       fetchPaymentMethods();
       fetchCommittee();
       fetchApprovedList();
+      fetchEventPhotos();
     }
   }, [session, isAdmin, filter]);
 
@@ -128,6 +148,56 @@ export default function AdminPanel() {
       .order('ssc_batch', { ascending: false });
     setApprovedList((data as JoiningRequest[]) || []);
     setPrintLoading(false);
+  };
+
+  const fetchEventPhotos = async () => {
+    setGalleryLoading(true);
+    const { data } = await supabase.from('event_photos').select('*').order('sort_order', { ascending: true });
+    setEventPhotos((data as EventPhoto[]) || []);
+    setGalleryLoading(false);
+  };
+
+  const handleGalleryFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => { setGalleryFile(file); setGalleryPreview(reader.result as string); };
+    reader.readAsDataURL(file);
+  };
+
+  const uploadEventPhoto = async () => {
+    if (!galleryFile) return;
+    setGalleryUploading(true);
+    try {
+      const ext = galleryFile.name.split('.').pop();
+      const fileName = `event-photo-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from('event-photos').upload(fileName, galleryFile);
+      if (upErr) throw upErr;
+      const { data: { publicUrl } } = supabase.storage.from('event-photos').getPublicUrl(fileName);
+      await supabase.from('event_photos').insert({
+        photo_url: publicUrl,
+        caption: galleryCaption || null,
+        event_year: galleryYear ? parseInt(galleryYear) : null,
+        sort_order: eventPhotos.length + 1,
+      });
+      setGalleryFile(null);
+      setGalleryPreview('');
+      setGalleryCaption('');
+      setGalleryYear('');
+      fetchEventPhotos();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setGalleryUploading(false);
+    }
+  };
+
+  const deleteEventPhoto = async (id: string, photoUrl: string) => {
+    if (!window.confirm('এই ছবি মুছে ফেলবেন?')) return;
+    const fileName = photoUrl.split('/').pop();
+    if (fileName) await supabase.storage.from('event-photos').remove([fileName]);
+    await supabase.from('event_photos').delete().eq('id', id);
+    fetchEventPhotos();
   };
 
   const downloadCSV = (list: JoiningRequest[]) => {
@@ -445,6 +515,7 @@ export default function AdminPanel() {
             { key: 'payments', label: 'পেমেন্ট', icon: CreditCard },
             { key: 'committee', label: 'কমিটি', icon: UserCheck },
             { key: 'print', label: 'প্রিন্ট', icon: Printer },
+            { key: 'gallery', label: 'গ্যালারি', icon: Camera },
           ] as const).map(tab => (
             <button key={tab.key} onClick={() => setActiveTab(tab.key)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bengali transition whitespace-nowrap ${activeTab === tab.key ? 'bg-white/20 text-white' : 'text-white/60 hover:bg-white/10'}`}>
@@ -1068,6 +1139,113 @@ export default function AdminPanel() {
                     <p className="font-bengali text-muted-foreground">এখনো কোনো অনুমোদিত সদস্য নেই</p>
                   </div>
                 )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ===== GALLERY TAB ===== */}
+        {activeTab === 'gallery' && (
+          <div>
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <Camera className="w-8 h-8 text-primary" />
+              </div>
+              <h2 className="font-bengali text-2xl font-bold text-foreground mb-2">পূর্ববর্তী ইভেন্টের ছবি</h2>
+              <p className="font-bengali text-muted-foreground text-sm">ল্যান্ডিং পেজের গ্যালারি সেকশনে দেখানো হবে</p>
+            </div>
+
+            {/* Upload card */}
+            <div className="bg-card rounded-2xl border border-border shadow-card p-6 mb-8 space-y-4">
+              <h3 className="font-bengali font-bold text-foreground flex items-center gap-2">
+                <ImageIcon className="w-4 h-4 text-primary" /> নতুন ছবি আপলোড করুন
+              </h3>
+
+              <div
+                onClick={() => galleryFileRef.current?.click()}
+                className="border-2 border-dashed border-border rounded-xl p-6 text-center cursor-pointer hover:border-primary/60 transition bg-muted/30"
+              >
+                {galleryPreview ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <img src={galleryPreview} alt="preview" className="max-h-48 rounded-xl object-cover border-2 border-primary/20" />
+                    <p className="font-bengali text-xs text-muted-foreground">পরিবর্তন করতে ক্লিক করুন</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-2 py-4">
+                    <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Upload className="w-6 h-6 text-primary" />
+                    </div>
+                    <p className="font-bengali text-muted-foreground">ছবি সিলেক্ট করুন</p>
+                    <p className="font-bengali text-xs text-muted-foreground">JPG, PNG সাপোর্টেড</p>
+                  </div>
+                )}
+              </div>
+              <input ref={galleryFileRef} type="file" accept="image/*" className="hidden" onChange={handleGalleryFileChange} />
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bengali text-sm font-medium text-foreground mb-1 block">ক্যাপশন (ঐচ্ছিক)</label>
+                  <input
+                    className="w-full border border-border rounded-xl px-3 py-2 text-sm text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition font-bengali"
+                    placeholder="যেমন: ২০২৩ সালের ইফতার"
+                    value={galleryCaption}
+                    onChange={e => setGalleryCaption(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="font-bengali text-sm font-medium text-foreground mb-1 block">বছর (ঐচ্ছিক)</label>
+                  <input
+                    type="number"
+                    className="w-full border border-border rounded-xl px-3 py-2 text-sm text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition font-bengali"
+                    placeholder="যেমন: 2023"
+                    value={galleryYear}
+                    onChange={e => setGalleryYear(e.target.value)}
+                    min={2000} max={2030}
+                  />
+                </div>
+              </div>
+
+              <button
+                onClick={uploadEventPhoto}
+                disabled={!galleryFile || galleryUploading}
+                className="w-full py-3 rounded-xl font-bengali font-bold text-sm bg-primary text-primary-foreground hover:opacity-90 transition disabled:opacity-50"
+              >
+                {galleryUploading ? '⏳ আপলোড হচ্ছে...' : '📸 ছবি আপলোড করুন'}
+              </button>
+            </div>
+
+            {/* Photo grid */}
+            {galleryLoading ? (
+              <div className="text-center py-12">
+                <RefreshCw className="w-8 h-8 text-primary mx-auto animate-spin mb-3" />
+                <p className="font-bengali text-muted-foreground">লোড হচ্ছে...</p>
+              </div>
+            ) : eventPhotos.length === 0 ? (
+              <div className="text-center py-12">
+                <ImageIcon className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
+                <p className="font-bengali text-muted-foreground">এখনো কোনো ছবি আপলোড করা হয়নি</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                {eventPhotos.map(photo => (
+                  <div key={photo.id} className="relative group rounded-xl overflow-hidden border border-border shadow-card">
+                    <img
+                      src={photo.photo_url}
+                      alt={photo.caption || 'Event photo'}
+                      className="w-full aspect-square object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 p-2">
+                      {photo.caption && <p className="font-bengali text-white text-xs text-center leading-tight">{photo.caption}</p>}
+                      {photo.event_year && <span className="bg-amber-400 text-amber-900 text-xs font-bold px-2 py-0.5 rounded-full">{photo.event_year}</span>}
+                      <button
+                        onClick={() => deleteEventPhoto(photo.id, photo.photo_url)}
+                        className="mt-1 flex items-center gap-1 bg-red-500 text-white px-3 py-1.5 rounded-lg font-bengali text-xs hover:bg-red-600 transition"
+                      >
+                        <Trash2 className="w-3 h-3" /> মুছুন
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
