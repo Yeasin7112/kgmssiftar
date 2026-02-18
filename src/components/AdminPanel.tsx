@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import type { JoiningRequest } from "@/lib/supabase";
-import { Check, X, LogOut, RefreshCw, Eye, Users, Clock, CheckCircle, CreditCard, UserCheck, Plus, Trash2, Edit2, Save, Upload } from "lucide-react";
+import { Check, X, LogOut, RefreshCw, Eye, Users, Clock, CheckCircle, CreditCard, UserCheck, Plus, Trash2, Edit2, Save, Upload, UserPlus } from "lucide-react";
 import { Session } from "@supabase/supabase-js";
 
 interface PaymentMethod {
@@ -26,7 +26,7 @@ interface CommitteeMember {
   sort_order: number;
 }
 
-type AdminTab = 'requests' | 'payments' | 'committee';
+type AdminTab = 'requests' | 'payments' | 'committee' | 'members';
 
 export default function AdminPanel() {
   const [session, setSession] = useState<Session | null>(null);
@@ -57,6 +57,16 @@ export default function AdminPanel() {
   const [editMemberPhotoPreview, setEditMemberPhotoPreview] = useState('');
   const memberPhotoRef = useRef<HTMLInputElement>(null);
   const editMemberPhotoRef = useRef<HTMLInputElement>(null);
+
+  // Manual participant state
+  const [newParticipant, setNewParticipant] = useState({ name: '', ssc_batch: '', payment_amount: '100' });
+  const [participantPhotoFile, setParticipantPhotoFile] = useState<File | null>(null);
+  const [participantPhotoPreview, setParticipantPhotoPreview] = useState('');
+  const [participantSaving, setParticipantSaving] = useState(false);
+  const [participantError, setParticipantError] = useState('');
+  const [participantSuccess, setParticipantSuccess] = useState('');
+  const participantPhotoRef = useRef<HTMLInputElement>(null);
+  const sscBatches = Array.from({ length: 2026 - 1960 + 1 }, (_, i) => 2026 - i);
 
   useEffect(() => {
     supabase.auth.onAuthStateChange((_, s) => {
@@ -143,10 +153,10 @@ export default function AdminPanel() {
     fetchPaymentMethods();
   };
 
-  // Upload member photo helper
-  const uploadMemberPhoto = async (file: File): Promise<string> => {
+  // Upload photo helper
+  const uploadPhoto = async (file: File, prefix = 'photo'): Promise<string> => {
     const ext = file.name.split('.').pop();
-    const fileName = `committee-${Date.now()}.${ext}`;
+    const fileName = `${prefix}-${Date.now()}.${ext}`;
     const { error } = await supabase.storage.from('participant-photos').upload(fileName, file);
     if (error) throw error;
     const { data: { publicUrl } } = supabase.storage.from('participant-photos').getPublicUrl(fileName);
@@ -156,11 +166,11 @@ export default function AdminPanel() {
   // Committee CRUD
   const saveCommitteeMember = async () => {
     let photoUrl = newMember.photo_url;
-    if (memberPhotoFile) photoUrl = await uploadMemberPhoto(memberPhotoFile);
+    if (memberPhotoFile) photoUrl = await uploadPhoto(memberPhotoFile, 'committee');
 
     if (editingMember) {
       let editPhotoUrl: string | undefined = editingMember.photo_url;
-      if (editMemberPhotoFile) editPhotoUrl = await uploadMemberPhoto(editMemberPhotoFile);
+      if (editMemberPhotoFile) editPhotoUrl = await uploadPhoto(editMemberPhotoFile, 'committee');
       const { id, sort_order: _so, ...rest } = editingMember;
       await supabase.from('committee_members').update({ ...rest, photo_url: editPhotoUrl || null }).eq('id', id);
       setEditingMember(null);
@@ -200,6 +210,51 @@ export default function AdminPanel() {
     reader.readAsDataURL(file);
   };
 
+  // Manual participant
+  const handleParticipantPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setParticipantPhotoFile(file);
+      setParticipantPhotoPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const saveManualParticipant = async () => {
+    setParticipantError('');
+    setParticipantSuccess('');
+    if (!newParticipant.name.trim()) return setParticipantError('নাম দিন');
+    if (!newParticipant.ssc_batch) return setParticipantError('ব্যাচ সিলেক্ট করুন');
+
+    setParticipantSaving(true);
+    try {
+      let photoUrl = '';
+      if (participantPhotoFile) photoUrl = await uploadPhoto(participantPhotoFile, 'manual');
+
+      const { error } = await supabase.from('joining_requests').insert({
+        name: newParticipant.name.trim(),
+        ssc_batch: parseInt(newParticipant.ssc_batch),
+        photo_url: photoUrl || null,
+        payment_amount: parseInt(newParticipant.payment_amount) || 100,
+        payment_method: 'manual',
+        status: 'approved',
+      });
+
+      if (error) throw error;
+
+      setParticipantSuccess(`✅ "${newParticipant.name}" সফলভাবে তালিকায় যুক্ত হয়েছে`);
+      setNewParticipant({ name: '', ssc_batch: '', payment_amount: '100' });
+      setParticipantPhotoFile(null);
+      setParticipantPhotoPreview('');
+    } catch (err: unknown) {
+      setParticipantError(err instanceof Error ? err.message : 'সমস্যা হয়েছে, আবার চেষ্টা করুন');
+    } finally {
+      setParticipantSaving(false);
+    }
+  };
+
   const statusBadge = (status: string) => {
     const map: Record<string, string> = {
       pending: 'bg-amber-100 text-amber-700 border-amber-200',
@@ -212,7 +267,7 @@ export default function AdminPanel() {
 
   if (!session || !isAdmin) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, hsl(158 80% 8%) 0%, hsl(158 70% 16%) 50%, hsl(38 65% 16%) 100%)' }}>
+      <div className="min-h-screen flex items-center justify-center p-4 bg-primary">
         <div className="w-full max-w-md">
           <div className="bg-card rounded-2xl shadow-card border border-border overflow-hidden">
             <div className="bg-primary p-6 text-center">
@@ -223,12 +278,12 @@ export default function AdminPanel() {
               <div>
                 <label className="font-bengali text-sm font-medium text-foreground mb-2 block">ইমেইল</label>
                 <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="admin@gmail.com"
-                  className="w-full border border-border rounded-xl px-4 py-3 font-bengali-sans text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition" />
+                  className="w-full border border-border rounded-xl px-4 py-3 text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition" />
               </div>
               <div>
                 <label className="font-bengali text-sm font-medium text-foreground mb-2 block">পাসওয়ার্ড</label>
                 <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••"
-                  className="w-full border border-border rounded-xl px-4 py-3 font-bengali-sans text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition" />
+                  className="w-full border border-border rounded-xl px-4 py-3 text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition" />
               </div>
               {loginError && (
                 <div className="bg-red-50 border border-red-200 rounded-xl p-3">
@@ -241,14 +296,13 @@ export default function AdminPanel() {
               </button>
             </form>
           </div>
-          <p className="text-center mt-4 text-emerald-200 font-bengali text-sm opacity-70">শুধুমাত্র অ্যাডমিনের জন্য</p>
+          <p className="text-center mt-4 text-primary-foreground font-bengali text-sm opacity-70">শুধুমাত্র অ্যাডমিনের জন্য</p>
         </div>
       </div>
     );
   }
 
   const pendingCount = requests.filter(r => r.status === 'pending').length;
-
   const inputCls = "w-full border border-border rounded-xl px-3 py-2 text-sm text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition font-bengali";
 
   return (
@@ -271,14 +325,15 @@ export default function AdminPanel() {
           </div>
         </div>
         {/* Tabs */}
-        <div className="container mx-auto px-4 flex gap-1 pb-2">
+        <div className="container mx-auto px-4 flex gap-1 pb-2 overflow-x-auto">
           {([
             { key: 'requests', label: 'রিকুয়েস্ট', icon: Users },
+            { key: 'members', label: 'সদস্য যোগ', icon: UserPlus },
             { key: 'payments', label: 'পেমেন্ট', icon: CreditCard },
             { key: 'committee', label: 'কমিটি', icon: UserCheck },
           ] as const).map(tab => (
             <button key={tab.key} onClick={() => setActiveTab(tab.key)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bengali transition ${activeTab === tab.key ? 'bg-white/20 text-white' : 'text-white/60 hover:bg-white/10'}`}>
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bengali transition whitespace-nowrap ${activeTab === tab.key ? 'bg-white/20 text-white' : 'text-white/60 hover:bg-white/10'}`}>
               <tab.icon className="w-3.5 h-3.5" />
               {tab.label}
               {tab.key === 'requests' && pendingCount > 0 && (
@@ -352,6 +407,9 @@ export default function AdminPanel() {
                             <div className="flex items-center gap-2 flex-wrap mt-1">
                               <span className="bg-primary/10 text-primary text-xs font-bengali px-2 py-0.5 rounded-full">{req.ssc_batch} ব্যাচ</span>
                               {statusBadge(req.status)}
+                              {req.payment_method === 'manual' && (
+                                <span className="bg-green-100 text-green-700 text-xs font-bengali px-2 py-0.5 rounded-full border border-green-200">হাতে হাতে</span>
+                              )}
                             </div>
                           </div>
                           {req.status === 'pending' && (
@@ -379,17 +437,17 @@ export default function AdminPanel() {
                           {req.payment_number && (
                             <div className="bg-muted/50 rounded-lg px-3 py-2">
                               <p className="text-xs font-bengali text-muted-foreground">নম্বর</p>
-                              <p className="font-bengali-sans font-semibold text-foreground text-xs">{req.payment_number}</p>
+                              <p className="font-semibold text-foreground text-xs">{req.payment_number}</p>
                             </div>
                           )}
                           {req.transaction_id && (
                             <div className="bg-muted/50 rounded-lg px-3 py-2">
                               <p className="text-xs font-bengali text-muted-foreground">TxnID</p>
-                              <p className="font-bengali-sans font-semibold text-foreground text-xs truncate">{req.transaction_id}</p>
+                              <p className="font-semibold text-foreground text-xs truncate">{req.transaction_id}</p>
                             </div>
                           )}
                         </div>
-                        <p className="text-xs text-muted-foreground font-bengali-sans mt-2">{new Date(req.created_at).toLocaleString('bn-BD')}</p>
+                        <p className="text-xs text-muted-foreground mt-2">{new Date(req.created_at).toLocaleString('bn-BD')}</p>
                       </div>
                     </div>
                   </div>
@@ -397,6 +455,127 @@ export default function AdminPanel() {
               </div>
             )}
           </>
+        )}
+
+        {/* ===== MANUAL MEMBER ADD TAB ===== */}
+        {activeTab === 'members' && (
+          <div className="max-w-xl mx-auto">
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <UserPlus className="w-8 h-8 text-primary" />
+              </div>
+              <h2 className="font-bengali text-2xl font-bold text-foreground mb-2">সদস্য ম্যানুয়ালি যোগ করুন</h2>
+              <p className="font-bengali text-muted-foreground text-sm">
+                যারা হাতে হাতে টাকা দিয়েছেন তাদের সরাসরি অনুমোদিত তালিকায় যুক্ত করুন
+              </p>
+            </div>
+
+            <div className="bg-card rounded-2xl border border-border shadow-card p-6 space-y-5">
+              {/* Photo */}
+              <div>
+                <label className="font-bengali text-sm font-semibold text-foreground mb-2 block">ছবি (ঐচ্ছিক)</label>
+                <div
+                  onClick={() => participantPhotoRef.current?.click()}
+                  className="border-2 border-dashed border-border rounded-xl p-5 text-center cursor-pointer hover:border-primary/60 transition bg-muted/30"
+                >
+                  {participantPhotoPreview ? (
+                    <div className="flex flex-col items-center gap-2">
+                      <img src={participantPhotoPreview} alt="preview" className="w-24 h-24 rounded-full object-cover border-4 border-primary/30" />
+                      <p className="font-bengali text-xs text-muted-foreground">পরিবর্তন করতে ক্লিক করুন</p>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center gap-2 py-2">
+                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Upload className="w-5 h-5 text-primary" />
+                      </div>
+                      <p className="font-bengali text-sm text-muted-foreground">ছবি আপলোড করুন</p>
+                    </div>
+                  )}
+                </div>
+                <input ref={participantPhotoRef} type="file" accept="image/*" className="hidden" onChange={handleParticipantPhotoChange} />
+              </div>
+
+              {/* Name */}
+              <div>
+                <label className="font-bengali text-sm font-semibold text-foreground mb-2 block">পূর্ণ নাম *</label>
+                <input
+                  type="text"
+                  className={inputCls}
+                  placeholder="সদস্যের নাম লিখুন"
+                  value={newParticipant.name}
+                  onChange={e => setNewParticipant({ ...newParticipant, name: e.target.value })}
+                  maxLength={100}
+                />
+              </div>
+
+              {/* SSC Batch */}
+              <div>
+                <label className="font-bengali text-sm font-semibold text-foreground mb-2 block">এসএসসি ব্যাচ *</label>
+                <select
+                  className={inputCls}
+                  value={newParticipant.ssc_batch}
+                  onChange={e => setNewParticipant({ ...newParticipant, ssc_batch: e.target.value })}
+                >
+                  <option value="">ব্যাচ সিলেক্ট করুন</option>
+                  {sscBatches.map(year => (
+                    <option key={year} value={year}>{year} ব্যাচ</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Payment amount */}
+              <div>
+                <label className="font-bengali text-sm font-semibold text-foreground mb-2 block">চাঁদার পরিমাণ (টাকা)</label>
+                <input
+                  type="number"
+                  className={inputCls}
+                  placeholder="100"
+                  min={0}
+                  value={newParticipant.payment_amount}
+                  onChange={e => setNewParticipant({ ...newParticipant, payment_amount: e.target.value })}
+                />
+                <div className="flex gap-2 mt-2 flex-wrap">
+                  {[100, 200, 500, 1000].map(amt => (
+                    <button key={amt} type="button"
+                      onClick={() => setNewParticipant({ ...newParticipant, payment_amount: String(amt) })}
+                      className={`px-3 py-1.5 rounded-full text-sm font-bengali border transition ${
+                        newParticipant.payment_amount === String(amt)
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'border-border text-muted-foreground hover:border-primary/50 bg-background'
+                      }`}>
+                      ৳{amt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Info note */}
+              <div className="bg-green-50 border border-green-200 rounded-xl p-3">
+                <p className="font-bengali text-xs text-green-700">
+                  ✅ এই সদস্য সরাসরি <strong>অনুমোদিত</strong> তালিকায় যুক্ত হবেন। পেমেন্ট পদ্ধতি: হাতে হাতে।
+                </p>
+              </div>
+
+              {participantError && (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-3">
+                  <p className="font-bengali text-sm text-red-600">{participantError}</p>
+                </div>
+              )}
+              {participantSuccess && (
+                <div className="bg-green-50 border border-green-200 rounded-xl p-3">
+                  <p className="font-bengali text-sm text-green-700 font-medium">{participantSuccess}</p>
+                </div>
+              )}
+
+              <button
+                onClick={saveManualParticipant}
+                disabled={participantSaving}
+                className="w-full py-4 rounded-xl font-bengali text-lg font-bold bg-primary text-primary-foreground hover:opacity-90 active:scale-95 disabled:opacity-50 transition-all"
+              >
+                {participantSaving ? '⏳ যোগ হচ্ছে...' : '✅ তালিকায় যুক্ত করুন'}
+              </button>
+            </div>
+          </div>
         )}
 
         {/* ===== PAYMENTS TAB ===== */}
@@ -453,7 +632,7 @@ export default function AdminPanel() {
                       <span className="text-2xl">{m.icon}</span>
                       <div className="flex-1">
                         <p className="font-bengali font-bold text-foreground">{m.name} <span className="text-xs text-muted-foreground">({m.type})</span></p>
-                        <p className="font-bengali-sans text-sm text-muted-foreground">{m.number}</p>
+                        <p className="text-sm text-muted-foreground">{m.number}</p>
                       </div>
                       <div className="flex items-center gap-2">
                         <button onClick={() => togglePaymentActive(m)}
@@ -490,7 +669,6 @@ export default function AdminPanel() {
               <div className="bg-card rounded-2xl border border-border p-5 mb-6 space-y-4">
                 <h3 className="font-bengali font-bold text-foreground">নতুন সদস্য যোগ করুন</h3>
 
-                {/* Photo upload */}
                 <div>
                   <label className="font-bengali text-sm font-medium text-foreground mb-2 block">ছবি (ঐচ্ছিক)</label>
                   <div
@@ -533,7 +711,6 @@ export default function AdminPanel() {
                 <div key={m.id} className="bg-card rounded-2xl border border-border p-4">
                   {editingMember?.id === m.id ? (
                     <div className="space-y-3">
-                      {/* Edit photo */}
                       <div
                         onClick={() => editMemberPhotoRef.current?.click()}
                         className="border-2 border-dashed border-border rounded-xl p-3 text-center cursor-pointer hover:border-primary/50 transition bg-muted/30"
@@ -578,8 +755,8 @@ export default function AdminPanel() {
                       <div className="flex-1 min-w-0">
                         <p className="font-bengali font-bold text-foreground">{m.name}</p>
                         <p className="font-bengali text-sm text-muted-foreground">{m.role}{m.ssc_batch ? ` · ${m.ssc_batch} ব্যাচ` : ''}</p>
-                        {m.phone && <p className="font-bengali-sans text-xs text-muted-foreground">{m.phone}</p>}
-                        {m.facebook_url && <p className="font-bengali-sans text-xs text-blue-500 truncate">{m.facebook_url}</p>}
+                        {m.phone && <p className="text-xs text-muted-foreground">{m.phone}</p>}
+                        {m.facebook_url && <p className="text-xs text-blue-500 truncate">{m.facebook_url}</p>}
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
                         <button onClick={() => { setEditingMember(m); setEditMemberPhotoPreview(''); setEditMemberPhotoFile(null); }} className="p-1.5 rounded-lg bg-muted hover:bg-border transition">

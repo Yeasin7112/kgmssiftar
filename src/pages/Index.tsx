@@ -6,7 +6,6 @@ import JoiningForm from "@/components/JoiningForm";
 import ParticipantsList from "@/components/ParticipantsList";
 import PhotoWall from "@/components/PhotoWall";
 import CommitteeSection from "@/components/CommitteeSection";
-import PaymentSection from "@/components/PaymentSection";
 import Footer from "@/components/Footer";
 
 const Index = () => {
@@ -25,7 +24,7 @@ const Index = () => {
       <ParticipantsList />
       <PhotoWall />
       <CommitteeSection />
-      <PaymentSection />
+      <Footer />
       <Footer />
     </div>
   );
