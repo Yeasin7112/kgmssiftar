@@ -7,10 +7,10 @@ interface JoiningFormProps {
 }
 
 const PAYMENT_METHODS = [
-  { value: 'bkash', label: 'বিকাশ', number: '01XXXXXXXXX', color: '#E2136E' },
-  { value: 'nagad', label: 'নগদ', number: '01XXXXXXXXX', color: '#F55000' },
-  { value: 'rocket', label: 'রকেট', number: '01XXXXXXXXX', color: '#8C3494' },
-  { value: 'manual', label: 'হাতে হাতে', number: '', color: '#16A34A' },
+  { value: 'bkash', label: 'বিকাশ', number: '01XXXXXXXXX', color: '#C2185B' },
+  { value: 'nagad', label: 'নগদ', number: '01XXXXXXXXX', color: '#D84315' },
+  { value: 'rocket', label: 'রকেট', number: '01XXXXXXXXX', color: '#6A1B9A' },
+  { value: 'manual', label: 'হাতে হাতে', number: '', color: '#1B5E20' },
 ];
 
 export default function JoiningForm({ formRef }: JoiningFormProps) {
@@ -94,10 +94,12 @@ export default function JoiningForm({ formRef }: JoiningFormProps) {
 
   const selectedMethod = PAYMENT_METHODS.find(m => m.value === paymentMethod);
 
+  const inputCls = "w-full border border-border rounded-xl px-4 py-3 font-bengali text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition";
+
   if (success) {
     return (
-      <div ref={formRef} className="py-16 px-4 bg-background">
-        <div className="max-w-lg mx-auto text-center">
+      <div ref={formRef} className="py-16 px-4 bg-muted/20">
+        <div className="max-w-lg mx-auto text-center bg-card rounded-2xl border border-border shadow-card p-10">
           <div className="text-6xl mb-4">🌙</div>
           <h3 className="font-bengali text-2xl font-bold text-primary mb-3">
             আলহামদুলিল্লাহ! সফলভাবে জমা হয়েছে
@@ -117,7 +119,7 @@ export default function JoiningForm({ formRef }: JoiningFormProps) {
   }
 
   return (
-    <section ref={formRef} className="py-16 bg-background" id="join-form">
+    <section ref={formRef} className="py-16 bg-muted/20" id="join-form">
       <div className="container mx-auto px-4 max-w-2xl">
         {/* Section header */}
         <div className="text-center mb-10">
@@ -135,8 +137,9 @@ export default function JoiningForm({ formRef }: JoiningFormProps) {
         </div>
 
         <form onSubmit={handleSubmit} className="shadow-card rounded-2xl border border-border overflow-hidden bg-card">
-          <div className="bg-primary p-5 text-center">
-            <p className="font-bengali text-primary-foreground font-semibold text-lg">
+          {/* Form header */}
+          <div className="p-5 text-center" style={{ background: 'linear-gradient(135deg, hsl(158 70% 22%) 0%, hsl(158 64% 28%) 100%)' }}>
+            <p className="font-bengali font-semibold text-lg" style={{ color: 'hsl(44 90% 80%)' }}>
               🌙 ইফতার মাহফিল ২০২৬ — রেজিস্ট্রেশন
             </p>
           </div>
@@ -148,14 +151,8 @@ export default function JoiningForm({ formRef }: JoiningFormProps) {
                 <User className="w-4 h-4 text-primary" />
                 আপনার নাম *
               </label>
-              <input
-                type="text"
-                value={name}
-                onChange={e => setName(e.target.value)}
-                placeholder="পূর্ণ নাম লিখুন"
-                maxLength={100}
-                className="w-full border border-border rounded-xl px-4 py-3 font-bengali text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition"
-              />
+              <input type="text" value={name} onChange={e => setName(e.target.value)}
+                placeholder="পূর্ণ নাম লিখুন" maxLength={100} className={inputCls} />
             </div>
 
             {/* SSC Batch */}
@@ -164,11 +161,7 @@ export default function JoiningForm({ formRef }: JoiningFormProps) {
                 <Hash className="w-4 h-4 text-primary" />
                 এসএসসি ব্যাচ *
               </label>
-              <select
-                value={sscBatch}
-                onChange={e => setSscBatch(e.target.value)}
-                className="w-full border border-border rounded-xl px-4 py-3 font-bengali text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition"
-              >
+              <select value={sscBatch} onChange={e => setSscBatch(e.target.value)} className={inputCls}>
                 <option value="">ব্যাচ সিলেক্ট করুন</option>
                 {sscBatches.map(year => (
                   <option key={year} value={year}>{year} ব্যাচ</option>
@@ -184,7 +177,7 @@ export default function JoiningForm({ formRef }: JoiningFormProps) {
               </label>
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-border rounded-xl p-6 text-center cursor-pointer hover:border-primary/50 transition-colors bg-muted/30"
+                className="border-2 border-dashed border-border rounded-xl p-6 text-center cursor-pointer hover:border-primary/60 transition-colors bg-muted/40"
               >
                 {photoPreview ? (
                   <div className="flex flex-col items-center gap-3">
@@ -197,7 +190,7 @@ export default function JoiningForm({ formRef }: JoiningFormProps) {
                       <Upload className="w-6 h-6 text-primary" />
                     </div>
                     <p className="font-bengali text-sm text-muted-foreground">ছবি আপলোড করতে ক্লিক করুন</p>
-                    <p className="font-bengali text-xs text-muted-foreground opacity-60">সর্বোচ্চ ৫ MB (JPG, PNG)</p>
+                    <p className="font-bengali text-xs text-muted-foreground opacity-70">সর্বোচ্চ ৫ MB (JPG, PNG)</p>
                   </div>
                 )}
               </div>
@@ -211,27 +204,19 @@ export default function JoiningForm({ formRef }: JoiningFormProps) {
                 চাঁদার পরিমাণ (টাকা) *
               </label>
               <div className="flex items-center gap-3">
-                <input
-                  type="number"
-                  value={paymentAmount}
+                <input type="number" value={paymentAmount}
                   onChange={e => setPaymentAmount(Math.max(100, parseInt(e.target.value) || 100))}
-                  min={100}
-                  className="w-full border border-border rounded-xl px-4 py-3 font-bengali text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition"
-                />
+                  min={100} className={inputCls} />
                 <span className="font-bengali text-muted-foreground whitespace-nowrap text-sm">টাকা</span>
               </div>
               <div className="flex gap-2 mt-2 flex-wrap">
                 {[100, 200, 500, 1000].map(amt => (
-                  <button
-                    key={amt}
-                    type="button"
-                    onClick={() => setPaymentAmount(amt)}
+                  <button key={amt} type="button" onClick={() => setPaymentAmount(amt)}
                     className={`px-3 py-1.5 rounded-full text-sm font-bengali border transition ${
                       paymentAmount === amt
                         ? 'bg-primary text-primary-foreground border-primary'
-                        : 'border-border text-muted-foreground hover:border-primary/50'
-                    }`}
-                  >
+                        : 'border-border text-muted-foreground hover:border-primary/50 bg-background'
+                    }`}>
                     ৳{amt}
                   </button>
                 ))}
@@ -241,47 +226,39 @@ export default function JoiningForm({ formRef }: JoiningFormProps) {
 
             {/* Payment Method */}
             <div>
-              <label className="font-bengali text-sm font-semibold text-foreground mb-3 block">
-                পেমেন্ট পদ্ধতি *
-              </label>
+              <label className="font-bengali text-sm font-semibold text-foreground mb-3 block">পেমেন্ট পদ্ধতি *</label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
                 {PAYMENT_METHODS.map(method => (
-                  <button
-                    key={method.value}
-                    type="button"
-                    onClick={() => setPaymentMethod(method.value)}
-                    className={`p-3 rounded-xl border-2 text-center font-bengali font-semibold text-sm transition-all ${
-                      paymentMethod === method.value
-                        ? 'border-primary shadow-md scale-105'
-                        : 'border-border hover:border-primary/40'
+                  <button key={method.value} type="button" onClick={() => setPaymentMethod(method.value)}
+                    className={`p-3 rounded-xl border-2 text-center font-bengali font-bold text-sm transition-all bg-background ${
+                      paymentMethod === method.value ? 'shadow-md scale-105' : 'border-border hover:border-primary/40'
                     }`}
-                    style={paymentMethod === method.value ? { borderColor: method.color, background: method.color + '15' } : {}}
-                  >
-                    <div className="font-bold" style={{ color: method.color }}>{method.label}</div>
+                    style={paymentMethod === method.value ? { borderColor: method.color, background: method.color + '12' } : {}}>
+                    <div style={{ color: method.color }}>{method.label}</div>
                   </button>
                 ))}
               </div>
 
               {paymentMethod !== 'manual' && selectedMethod && (
-                <div className="bg-muted/40 rounded-xl p-4 border border-border">
-                  <p className="font-bengali text-sm text-muted-foreground mb-1">
+                <div className="bg-primary/5 rounded-xl p-4 border border-primary/20">
+                  <p className="font-bengali text-sm text-foreground mb-1">
                     <span className="font-semibold" style={{ color: selectedMethod.color }}>{selectedMethod.label}</span> নম্বরে ৳{paymentAmount} পাঠান
                   </p>
-                  <p className="font-display font-bold text-lg text-foreground mb-3">01XXXXXXXXX</p>
-                  <p className="font-bengali text-xs text-muted-foreground opacity-70">পেমেন্টের পর নিচে তথ্য পূরণ করুন</p>
+                  <p className="font-display font-bold text-lg text-foreground mb-2">01XXXXXXXXX</p>
+                  <p className="font-bengali text-xs text-muted-foreground">পেমেন্টের পর নিচে তথ্য পূরণ করুন</p>
                 </div>
               )}
 
               {paymentMethod === 'manual' && (
                 <div className="bg-green-50 border border-green-200 rounded-xl p-4">
-                  <p className="font-bengali text-sm text-green-700">
+                  <p className="font-bengali text-sm text-green-800 font-medium">
                     সরাসরি হাতে হাতে টাকা দেওয়া যাবে। যোগাযোগ করুন।
                   </p>
                 </div>
               )}
             </div>
 
-            {/* Payment Number */}
+            {/* Payment Number & TxnID */}
             {paymentMethod !== 'manual' && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -289,44 +266,33 @@ export default function JoiningForm({ formRef }: JoiningFormProps) {
                     <Phone className="w-4 h-4 text-primary" />
                     আপনার নম্বর *
                   </label>
-                  <input
-                    type="text"
-                    value={paymentNumber}
-                    onChange={e => setPaymentNumber(e.target.value)}
-                    placeholder="যে নম্বর থেকে পাঠিয়েছেন"
-                    maxLength={20}
-                    className="w-full border border-border rounded-xl px-4 py-3 font-bengali text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition"
-                  />
+                  <input type="text" value={paymentNumber} onChange={e => setPaymentNumber(e.target.value)}
+                    placeholder="যে নম্বর থেকে পাঠিয়েছেন" maxLength={20} className={inputCls} />
                 </div>
                 <div>
                   <label className="font-bengali text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
                     <Hash className="w-4 h-4 text-primary" />
                     ট্রানজেকশন আইডি *
                   </label>
-                  <input
-                    type="text"
-                    value={transactionId}
-                    onChange={e => setTransactionId(e.target.value)}
-                    placeholder="TxnID / Reference"
-                    maxLength={50}
-                    className="w-full border border-border rounded-xl px-4 py-3 font-bengali text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition"
-                  />
+                  <input type="text" value={transactionId} onChange={e => setTransactionId(e.target.value)}
+                    placeholder="TxnID / Reference" maxLength={50} className={inputCls} />
                 </div>
               </div>
             )}
 
             {error && (
               <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-                <p className="font-bengali text-sm text-red-600">{error}</p>
+                <p className="font-bengali text-sm text-red-700 font-medium">{error}</p>
               </div>
             )}
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-4 rounded-xl font-bengali text-lg font-bold text-emerald-900 transition-all hover:opacity-90 active:scale-95 disabled:opacity-50"
-              style={{ background: 'linear-gradient(135deg, hsl(44, 85%, 55%), hsl(38, 90%, 65%))' }}
-            >
+            <button type="submit" disabled={loading}
+              className="w-full py-4 rounded-xl font-bengali text-lg font-bold transition-all hover:opacity-90 active:scale-95 disabled:opacity-50"
+              style={{
+                background: 'linear-gradient(135deg, hsl(44 85% 50%), hsl(38 90% 60%))',
+                color: 'hsl(158 70% 10%)',
+                boxShadow: '0 4px 20px hsl(44 80% 52% / 0.35)',
+              }}>
               {loading ? '⏳ জমা হচ্ছে...' : '🌙 রেজিস্ট্রেশন জমা দিন'}
             </button>
           </div>
