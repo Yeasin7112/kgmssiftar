@@ -53,6 +53,36 @@ export type Database = {
         }
         Relationships: []
       }
+      event_photos: {
+        Row: {
+          caption: string | null
+          created_at: string
+          event_year: number | null
+          id: string
+          photo_url: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          event_year?: number | null
+          id?: string
+          photo_url: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          event_year?: number | null
+          id?: string
+          photo_url?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       joining_requests: {
         Row: {
           created_at: string
