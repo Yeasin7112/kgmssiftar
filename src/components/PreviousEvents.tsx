@@ -71,22 +71,22 @@ export default function PreviousEvents({ onJoinClick }: PreviousEventsProps) {
               <p className="font-bengali text-muted-foreground">লোড হচ্ছে...</p>
             </div>
           ) : (
-            <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-3 space-y-3">
+            <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-4 -mx-4 px-4">
               {photos.map((photo, i) => (
                 <div
                   key={photo.id}
                   onClick={() => setSelectedPhoto(photo)}
-                  className="break-inside-avoid rounded-2xl overflow-hidden border border-border shadow-card group relative cursor-pointer"
+                  className="flex-shrink-0 w-[80vw] max-w-sm snap-center rounded-2xl overflow-hidden border border-border shadow-card group relative cursor-pointer"
                   style={{ animationDelay: `${i * 60}ms` }}
                 >
                   <img
                     src={photo.photo_url}
                     alt={photo.caption || 'Previous event photo'}
-                    className="w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-500"
                     loading="lazy"
                   />
                   {/* Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-3">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex items-end p-3">
                     <div>
                       {photo.caption && (
                         <p className="font-bengali font-bold text-white text-sm leading-tight">{photo.caption}</p>

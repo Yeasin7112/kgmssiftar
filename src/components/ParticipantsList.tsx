@@ -93,27 +93,27 @@ export default function ParticipantsList() {
             <p className="font-bengali text-sm text-muted-foreground opacity-70">রেজিস্ট্রেশন করুন এবং এখানে আপনার নাম দেখুন!</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+          <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-4 -mx-4 px-4">
             {filtered.map((participant) => (
               <div
                 key={participant.id}
-                className="bg-card rounded-2xl border border-border shadow-card p-4 text-center hover:shadow-gold transition-all hover:-translate-y-1 duration-300"
+                className="flex-shrink-0 w-48 snap-center bg-card rounded-2xl border border-border shadow-card p-5 text-center hover:shadow-gold transition-all duration-300"
               >
                 {participant.photo_url ? (
                   <img
                     src={participant.photo_url}
                     alt={participant.name}
-                    className="w-16 h-16 rounded-full object-cover mx-auto mb-3 border-3 border-primary/30"
-                    style={{ borderWidth: '3px' }}
+                    className="w-20 h-20 rounded-full object-cover mx-auto mb-3"
+                    style={{ borderWidth: '3px', borderStyle: 'solid', borderColor: 'hsl(var(--primary) / 0.3)' }}
                   />
                 ) : (
-                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
-                    <span className="text-2xl font-bold text-primary font-bengali">
+                  <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
+                    <span className="text-3xl font-bold text-primary font-bengali">
                       {participant.name.charAt(0)}
                     </span>
                   </div>
                 )}
-                <p className="font-bengali font-semibold text-sm text-foreground mb-1 leading-tight">
+                <p className="font-bengali font-semibold text-sm text-foreground mb-2 leading-tight">
                   {participant.name}
                 </p>
                 <span className="inline-block bg-primary/10 text-primary text-xs font-bengali px-2 py-0.5 rounded-full">
