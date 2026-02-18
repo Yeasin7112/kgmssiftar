@@ -36,9 +36,6 @@ export default function Footer() {
         </div>
 
         <div className="mt-6 h-px w-24 bg-amber-400/40 mx-auto" />
-        <p className="text-emerald-300 text-xs mt-3 font-bengali-sans">
-          © 2026 Khepupara High School Alumni Iftar
-        </p>
       </div>
     </footer>
   );

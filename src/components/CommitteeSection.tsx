@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Facebook, Phone, Users } from "lucide-react";
+import { Facebook, Phone, Users, Pin } from "lucide-react";
 
 interface CommitteeMember {
   id: string;
@@ -11,6 +11,7 @@ interface CommitteeMember {
   photo_url?: string;
   ssc_batch?: number;
   sort_order: number;
+  is_pinned?: boolean;
 }
 
 export default function CommitteeSection() {
@@ -52,11 +53,11 @@ export default function CommitteeSection() {
             <Users className="w-10 h-10 text-primary mx-auto animate-pulse" />
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5 max-w-5xl mx-auto">
+          <div className="flex gap-5 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent snap-x snap-mandatory">
             {members.map((member) => (
               <div
                 key={member.id}
-                className="bg-card rounded-2xl border border-border shadow-card p-4 text-center hover:shadow-gold transition-all hover:-translate-y-1 duration-300"
+                className="bg-card rounded-2xl border border-border shadow-card p-4 text-center hover:shadow-gold transition-all hover:-translate-y-1 duration-300 flex-shrink-0 w-40 snap-start"
               >
                 {member.photo_url ? (
                   <img
@@ -71,7 +72,12 @@ export default function CommitteeSection() {
                     </span>
                   </div>
                 )}
-                <p className="font-bengali font-bold text-sm text-foreground mb-1 leading-tight">{member.name}</p>
+                <div className="flex items-center justify-center gap-1 mb-1">
+                  {member.is_pinned && (
+                    <Pin className="w-3 h-3 text-amber-500" />
+                  )}
+                  <p className="font-bengali font-bold text-sm text-foreground leading-tight">{member.name}</p>
+                </div>
                 <span className="inline-block bg-primary/10 text-primary text-xs font-bengali px-2 py-0.5 rounded-full mb-2">
                   {member.role}
                 </span>
