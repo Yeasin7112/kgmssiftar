@@ -48,7 +48,7 @@ export default function HeroSection({ onJoinClick }: HeroSectionProps) {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8 max-w-xl mx-auto">
               {[
                 { top: '২৮', bottom: 'রমজান' },
-                { top: 'ইফতার', bottom: 'মাহফিল' },
+                { top: '১৮ মার্চ', bottom: '২০২৬' },
                 { top: 'খেপুপাড়া', bottom: 'হাই স্কুল' },
               ].map((item, i) => (
                 <div
