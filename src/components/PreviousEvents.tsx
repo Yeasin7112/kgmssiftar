@@ -9,7 +9,11 @@ interface EventPhoto {
   event_year?: number;
 }
 
-export default function PreviousEvents() {
+interface PreviousEventsProps {
+  onJoinClick?: () => void;
+}
+
+export default function PreviousEvents({ onJoinClick }: PreviousEventsProps) {
   const [photos, setPhotos] = useState<EventPhoto[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPhoto, setSelectedPhoto] = useState<EventPhoto | null>(null);
@@ -46,6 +50,19 @@ export default function PreviousEvents() {
             <p className="font-bengali text-muted-foreground">
               বিগত বছরগুলোর স্মরণীয় মুহূর্তের ছবি
             </p>
+            {onJoinClick && (
+              <button
+                onClick={onJoinClick}
+                className="mt-5 inline-flex items-center gap-2 px-6 py-3 rounded-full font-bengali font-bold text-sm transition-all hover:scale-105 active:scale-95"
+                style={{
+                  background: 'linear-gradient(135deg, hsl(44 85% 52%), hsl(38 90% 62%))',
+                  color: 'hsl(158 70% 10%)',
+                  boxShadow: '0 4px 20px hsl(44 80% 52% / 0.4)',
+                }}
+              >
+                🌙 এখনই রেজিষ্ট্রেশন করুন
+              </button>
+            )}
           </div>
 
           {loading ? (

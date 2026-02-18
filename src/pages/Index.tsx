@@ -23,9 +23,9 @@ const Index = () => {
       <CountdownTimer />
       <JoiningForm formRef={formRef} />
       <ParticipantsList />
-      <PhotoWall />
+      <PhotoWall onJoinClick={scrollToForm} />
       <CommitteeSection />
-      <PreviousEvents />
+      <PreviousEvents onJoinClick={scrollToForm} />
       <Footer />
     </div>
   );
