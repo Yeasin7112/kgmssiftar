@@ -49,11 +49,12 @@ Design requirements:
     }
 
     const data = await response.json();
-    const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    const imageData = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
 
-    if (!imageUrl) throw new Error('No image generated');
+    if (!imageData) throw new Error('No image generated');
 
-    return new Response(JSON.stringify({ imageUrl }), {
+    // imageData is a base64 data URL — pass directly to client
+    return new Response(JSON.stringify({ imageUrl: imageData }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
