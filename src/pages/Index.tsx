@@ -25,7 +25,6 @@ const Index = () => {
       <PhotoWall />
       <CommitteeSection />
       <Footer />
-      <Footer />
     </div>
   );
 };

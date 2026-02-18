@@ -262,11 +262,17 @@ export default function JoiningForm({ formRef }: JoiningFormProps) {
                 </div>
 
                 {selectedMethod && !isManual && (
-                  <div className="bg-primary/5 rounded-xl p-4 border border-primary/20">
-                    <p className="font-bengali text-sm text-foreground mb-1">
+                  <div className="bg-primary/5 rounded-xl p-4 border border-primary/20 space-y-2">
+                    <p className="font-bengali text-sm text-foreground">
                       <span className="font-semibold text-primary">{selectedMethod.name}</span> নম্বরে ৳{paymentAmount} পাঠান
                     </p>
-                    <p className="font-display font-bold text-xl text-primary mb-1">{selectedMethod.number}</p>
+                    <p className="font-display font-bold text-xl text-primary">{selectedMethod.number}</p>
+                    {selectedMethod.instruction && (
+                      <div className="bg-primary/10 rounded-lg px-3 py-2 mt-1">
+                        <p className="font-bengali text-xs text-primary font-medium mb-1">নির্দেশনা:</p>
+                        <p className="font-bengali text-xs text-foreground leading-relaxed">{selectedMethod.instruction}</p>
+                      </div>
+                    )}
                     <p className="font-bengali text-xs text-muted-foreground">পেমেন্টের পর নিচে তথ্য পূরণ করুন</p>
                   </div>
                 )}
