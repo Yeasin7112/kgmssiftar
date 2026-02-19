@@ -20,20 +20,6 @@ export default function Footer() {
           <p>রমজান কারীম | بارك الله فيكم</p>
         </div>
 
-        <div className="flex items-center justify-center gap-1 text-emerald-200 font-bengali-sans text-sm">
-          <span>Made with</span>
-          <span className="text-red-400 animate-pulse">❤️</span>
-          <span>by</span>
-          <a
-            href="https://www.facebook.com/share/16qsAxToVV/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-amber-300 hover:text-amber-200 font-semibold transition-colors underline underline-offset-2"
-          >
-            <Facebook className="w-4 h-4" />
-            Yeasin
-          </a>
-        </div>
 
         <div className="mt-6 h-px w-24 bg-amber-400/40 mx-auto" />
       </div>
