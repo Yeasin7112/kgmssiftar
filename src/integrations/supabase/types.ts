@@ -96,6 +96,7 @@ export type Database = {
           payment_amount: number
           payment_method: string
           payment_number: string | null
+          payment_receiver: string | null
           photo_url: string | null
           ssc_batch: number
           status: string
@@ -111,6 +112,7 @@ export type Database = {
           payment_amount?: number
           payment_method?: string
           payment_number?: string | null
+          payment_receiver?: string | null
           photo_url?: string | null
           ssc_batch: number
           status?: string
@@ -126,6 +128,7 @@ export type Database = {
           payment_amount?: number
           payment_method?: string
           payment_number?: string | null
+          payment_receiver?: string | null
           photo_url?: string | null
           ssc_batch?: number
           status?: string
