@@ -33,6 +33,7 @@ export default function JoiningForm({ formRef }: JoiningFormProps) {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
+  const [paymentReceiver, setPaymentReceiver] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const sscBatches = Array.from({ length: 2026 - 1960 + 1 }, (_, i) => 2026 - i);
@@ -102,6 +103,7 @@ export default function JoiningForm({ formRef }: JoiningFormProps) {
         payment_number: paymentNumber.trim() || null,
         transaction_id: transactionId.trim() || null,
         mobile_number: mobileNumber.trim() || null,
+        payment_receiver: isManual ? paymentReceiver.trim() || null : null,
       });
 
       if (insertError) throw insertError;
@@ -109,7 +111,7 @@ export default function JoiningForm({ formRef }: JoiningFormProps) {
       setSuccess(true);
       setName(''); setSscBatch(''); setPhotoFile(null); setPhotoPreview('');
       setPaymentAmount(100); setPaymentNumber(''); setTransactionId('');
-      setMobileNumber('');
+      setMobileNumber(''); setPaymentReceiver('');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'কিছু একটা সমস্যা হয়েছে, আবার চেষ্টা করুন';
       setError(msg);
@@ -321,13 +323,32 @@ export default function JoiningForm({ formRef }: JoiningFormProps) {
                 )}
 
                 {isManual && (
-                  <div className="bg-green-50 border border-green-200 rounded-xl p-4 space-y-1">
-                    <p className="font-bengali text-sm text-green-800 font-medium">
-                      সরাসরি হাতে হাতে টাকা দেওয়া যাবে।
-                    </p>
-                    {selectedMethod?.instruction && (
-                      <p className="font-bengali text-xs text-green-700 leading-relaxed">{selectedMethod.instruction}</p>
-                    )}
+                  <div className="space-y-3">
+                    <div className="bg-green-50 border border-green-200 rounded-xl p-4 space-y-1">
+                      <p className="font-bengali text-sm text-green-800 font-medium">
+                        সরাসরি হাতে হাতে টাকা দেওয়া যাবে।
+                      </p>
+                      {selectedMethod?.instruction && (
+                        <p className="font-bengali text-xs text-green-700 leading-relaxed">{selectedMethod.instruction}</p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="font-bengali text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+                        <User className="w-4 h-4 text-primary" />
+                        কার কাছে টাকা দিবেন? (ঐচ্ছিক)
+                      </label>
+                      <input
+                        type="text"
+                        value={paymentReceiver}
+                        onChange={e => setPaymentReceiver(e.target.value)}
+                        placeholder="যেমন: রাহেলা ম্যাডাম, সাদিক ভাই..."
+                        maxLength={100}
+                        className={inputCls}
+                      />
+                      <p className="font-bengali text-xs text-muted-foreground mt-1 opacity-70">
+                        যার কাছে টাকা দেবেন তার নাম লিখুন — আয়োজকদের হিসাব রাখতে সাহায্য হবে
+                      </p>
+                    </div>
                   </div>
                 )}
               </div>

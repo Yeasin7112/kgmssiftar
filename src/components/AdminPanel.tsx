@@ -80,7 +80,7 @@ export default function AdminPanel() {
   const editMemberPhotoRef = useRef<HTMLInputElement>(null);
 
   // Manual participant state
-  const [newParticipant, setNewParticipant] = useState({ name: '', ssc_batch: '', payment_amount: '100', mobile_number: '' });
+  const [newParticipant, setNewParticipant] = useState({ name: '', ssc_batch: '', payment_amount: '100', mobile_number: '', payment_receiver: '' });
   const [participantPhotoFile, setParticipantPhotoFile] = useState<File | null>(null);
   const [participantPhotoPreview, setParticipantPhotoPreview] = useState('');
   const [participantSaving, setParticipantSaving] = useState(false);
@@ -471,12 +471,13 @@ export default function AdminPanel() {
         status: 'approved',
         added_by: session?.user?.email || null,
         mobile_number: newParticipant.mobile_number.trim() || null,
+        payment_receiver: newParticipant.payment_receiver.trim() || null,
       });
 
       if (error) throw error;
 
       setParticipantSuccess(`✅ "${newParticipant.name}" সফলভাবে তালিকায় যুক্ত হয়েছে`);
-      setNewParticipant({ name: '', ssc_batch: '', payment_amount: '100', mobile_number: '' });
+      setNewParticipant({ name: '', ssc_batch: '', payment_amount: '100', mobile_number: '', payment_receiver: '' });
       setParticipantPhotoFile(null);
       setParticipantPhotoPreview('');
     } catch (err: unknown) {
@@ -732,6 +733,12 @@ export default function AdminPanel() {
                                 <p className="font-semibold text-foreground text-xs truncate">{req.transaction_id}</p>
                               </div>
                             )}
+                            {(req as JoiningRequest & { payment_receiver?: string }).payment_receiver && (
+                              <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                                <p className="text-xs font-bengali text-muted-foreground">টাকা পেয়েছেন</p>
+                                <p className="font-bengali font-semibold text-green-700 text-xs">{(req as JoiningRequest & { payment_receiver?: string }).payment_receiver}</p>
+                              </div>
+                            )}
                           </div>
                           <div className="flex items-center gap-3 flex-wrap mt-1">
                             <p className="text-xs text-muted-foreground">{new Date(req.created_at).toLocaleString('bn-BD')}</p>
@@ -827,6 +834,19 @@ export default function AdminPanel() {
                   value={newParticipant.mobile_number}
                   onChange={e => setNewParticipant({ ...newParticipant, mobile_number: e.target.value })}
                   maxLength={15}
+                />
+              </div>
+
+              {/* Payment Receiver */}
+              <div>
+                <label className="font-bengali text-sm font-semibold text-foreground mb-2 block">কার কাছে টাকা দিয়েছেন? (ঐচ্ছিক)</label>
+                <input
+                  type="text"
+                  className={inputCls}
+                  placeholder="যেমন: রাহেলা ম্যাডাম, সাদিক ভাই..."
+                  value={newParticipant.payment_receiver}
+                  onChange={e => setNewParticipant({ ...newParticipant, payment_receiver: e.target.value })}
+                  maxLength={100}
                 />
               </div>
               <div>

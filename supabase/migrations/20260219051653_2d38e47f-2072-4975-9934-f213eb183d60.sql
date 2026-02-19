@@ -1,0 +1,1 @@
+ALTER TABLE public.joining_requests ADD COLUMN IF NOT EXISTS payment_receiver text DEFAULT NULL;
