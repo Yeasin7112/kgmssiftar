@@ -732,6 +732,12 @@ export default function AdminPanel() {
                                 <p className="font-semibold text-foreground text-xs truncate">{req.transaction_id}</p>
                               </div>
                             )}
+                            {(req as JoiningRequest & { payment_receiver?: string }).payment_receiver && (
+                              <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                                <p className="text-xs font-bengali text-muted-foreground">টাকা পেয়েছেন</p>
+                                <p className="font-bengali font-semibold text-green-700 text-xs">{(req as JoiningRequest & { payment_receiver?: string }).payment_receiver}</p>
+                              </div>
+                            )}
                           </div>
                           <div className="flex items-center gap-3 flex-wrap mt-1">
                             <p className="text-xs text-muted-foreground">{new Date(req.created_at).toLocaleString('bn-BD')}</p>
