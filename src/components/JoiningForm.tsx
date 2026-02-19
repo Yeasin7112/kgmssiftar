@@ -342,13 +342,10 @@ export default function JoiningForm({ formRef }: JoiningFormProps) {
                         type="text"
                         value={paymentReceiver}
                         onChange={e => setPaymentReceiver(e.target.value)}
-                        placeholder="যেমন: রাহেলা ম্যাডাম, সাদিক ভাই..."
+                        placeholder="যেমন: রনি, বিধান শাহা"
                         maxLength={100}
                         className={inputCls}
                       />
-                      <p className="font-bengali text-xs text-muted-foreground mt-1 opacity-70">
-                        যার কাছে টাকা দেবেন তার নাম লিখুন — আয়োজকদের হিসাব রাখতে সাহায্য হবে
-                      </p>
                     </div>
                   </div>
                 )}
