@@ -52,7 +52,7 @@ export default function JoiningForm({ formRef }: JoiningFormProps) {
   }, []);
 
   const selectedMethod = paymentMethods.find(m => m.name.toLowerCase() === paymentMethod);
-  const isManual = selectedMethod?.type === 'হাতে হাতে' || selectedMethod?.name === 'হাতে হাতে';
+  const isManual = selectedMethod?.type === 'ক্যাশ' || selectedMethod?.name?.includes('হাতে হাতে');
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
