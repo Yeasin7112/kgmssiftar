@@ -77,6 +77,7 @@ export default function JoiningForm({ formRef }: JoiningFormProps) {
     if (paymentAmount < 100) return setError('সর্বনিম্ন চাঁদা ১০০ টাকা');
     if (!isManual && !paymentNumber.trim()) return setError('পেমেন্ট নম্বর দিন');
     if (!isManual && !transactionId.trim()) return setError('ট্রানজেকশন আইডি দিন');
+    if (isManual && !paymentReceiver.trim()) return setError('টাকা গ্রহণকারীর নাম দিন');
 
     setLoading(true);
     try {
@@ -335,7 +336,7 @@ export default function JoiningForm({ formRef }: JoiningFormProps) {
                     <div>
                       <label className="font-bengali text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
                         <User className="w-4 h-4 text-primary" />
-                        কার কাছে টাকা দিবেন? (ঐচ্ছিক)
+                        কার কাছে টাকা দিবেন? *
                       </label>
                       <input
                         type="text"
