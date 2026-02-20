@@ -21,18 +21,16 @@ export default function Footer() {
         </div>
 
 
-        <div className="flex items-center justify-center gap-1 text-emerald-200 font-bengali-sans text-sm mb-6">
-          <span>Made with</span>
-          <span className="text-red-400 animate-pulse">❤️</span>
-          <span>by</span>
+        <div className="flex items-center justify-center gap-1 text-emerald-200 font-bengali text-sm mb-6">
+          <span>কারিগরি সহায়তায় :</span>
           <a
             href="https://www.facebook.com/share/16qsAxToVV/"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-amber-300 hover:text-amber-200 font-semibold transition-colors underline underline-offset-2"
+            className="inline-flex items-center gap-1 text-amber-300 hover:text-amber-200 font-bold transition-colors bg-amber-400/10 px-2 py-0.5 rounded-full border border-amber-400/30"
           >
-            <Facebook className="w-4 h-4" />
-            Yeasin
+            <Facebook className="w-3.5 h-3.5" />
+            ইয়াছিন আরাফাত শাওন
           </a>
         </div>
 

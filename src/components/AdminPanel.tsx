@@ -607,7 +607,7 @@ export default function AdminPanel() {
                   type="text"
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
-                  placeholder="নাম দিয়ে খুঁজুন..."
+                  placeholder="নাম, ব্যাচ বা TxnID দিয়ে খুঁজুন..."
                   className="w-full border border-border rounded-xl pl-10 pr-4 py-2.5 text-sm font-bengali text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition"
                 />
                 <Eye className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
@@ -633,7 +633,8 @@ export default function AdminPanel() {
             {(() => {
               const filtered = requests.filter(r =>
                 r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                String(r.ssc_batch).includes(searchQuery)
+                String(r.ssc_batch).includes(searchQuery) ||
+                (r.transaction_id || '').toLowerCase().includes(searchQuery.toLowerCase())
               );
               if (loading) return (
                 <div className="text-center py-12">
