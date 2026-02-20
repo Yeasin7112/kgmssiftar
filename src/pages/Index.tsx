@@ -24,8 +24,8 @@ const Index = () => {
       <JoiningForm formRef={formRef} />
       <ParticipantsList />
       <PhotoWall onJoinClick={scrollToForm} />
-      <CommitteeSection />
       <PreviousEvents onJoinClick={scrollToForm} />
+      <CommitteeSection />
       <Footer />
 
       {/* Floating WhatsApp Button */}
