@@ -692,18 +692,20 @@ export default function AdminPanel() {
                                   </button>
                                 </>
                               )}
-                              <button
-                                onClick={() => deleteRequest(req.id)}
-                                disabled={deletingId === req.id}
-                                className="flex items-center gap-1 bg-red-50 text-red-600 border border-red-200 px-3 py-1.5 rounded-lg font-bengali text-sm hover:bg-red-100 transition disabled:opacity-50"
-                                title="মুছে ফেলুন"
-                              >
-                                {deletingId === req.id
-                                  ? <RefreshCw className="w-4 h-4 animate-spin" />
-                                  : <Trash2 className="w-4 h-4" />
-                                }
-                                <span className="hidden sm:inline">মুছুন</span>
-                              </button>
+                              {isSuperAdmin && (
+                                <button
+                                  onClick={() => deleteRequest(req.id)}
+                                  disabled={deletingId === req.id}
+                                  className="flex items-center gap-1 bg-red-50 text-red-600 border border-red-200 px-3 py-1.5 rounded-lg font-bengali text-sm hover:bg-red-100 transition disabled:opacity-50"
+                                  title="মুছে ফেলুন"
+                                >
+                                  {deletingId === req.id
+                                    ? <RefreshCw className="w-4 h-4 animate-spin" />
+                                    : <Trash2 className="w-4 h-4" />
+                                  }
+                                  <span className="hidden sm:inline">মুছুন</span>
+                                </button>
+                              )}
                             </div>
                           </div>
                           <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
