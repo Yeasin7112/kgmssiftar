@@ -698,6 +698,12 @@ export default function AdminPanel() {
                                   </button>
                                 </>
                               )}
+                              {req.status === 'rejected' && (
+                                <button onClick={() => updateStatus(req.id, 'approved')}
+                                  className="flex items-center gap-1 bg-green-100 text-green-700 border border-green-200 px-3 py-1.5 rounded-lg font-bengali text-sm hover:bg-green-200 transition">
+                                  <Check className="w-4 h-4" /><span>পুনরায় অনুমোদন</span>
+                                </button>
+                              )}
                               {isSuperAdmin && (
                                 <>
                                   <button

@@ -4,6 +4,7 @@ import HeroSection from "@/components/HeroSection";
 import CountdownTimer from "@/components/CountdownTimer";
 import JoiningForm from "@/components/JoiningForm";
 import ParticipantsList from "@/components/ParticipantsList";
+import TopDonors from "@/components/TopDonors";
 import PhotoWall from "@/components/PhotoWall";
 import CommitteeSection from "@/components/CommitteeSection";
 import PreviousEvents from "@/components/PreviousEvents";
@@ -23,6 +24,7 @@ const Index = () => {
       <CountdownTimer />
       <JoiningForm formRef={formRef} />
       <ParticipantsList />
+      <TopDonors />
       <PhotoWall onJoinClick={scrollToForm} />
       <PreviousEvents onJoinClick={scrollToForm} />
       <CommitteeSection />
