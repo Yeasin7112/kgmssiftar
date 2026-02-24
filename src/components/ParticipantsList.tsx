@@ -35,7 +35,12 @@ export default function ParticipantsList() {
   }, []);
 
   const batches = [...new Set(participants.map(p => p.ssc_batch))].sort((a, b) => b - a);
-  const filtered = selectedBatch === 'all' ? participants : participants.filter(p => p.ssc_batch === selectedBatch);
+  const filteredBase = selectedBatch === 'all' ? participants : participants.filter(p => p.ssc_batch === selectedBatch);
+  const filtered = [...filteredBase].sort((a, b) => {
+    const aPinned = (a as JoiningRequest & { is_pinned?: boolean }).is_pinned ? 1 : 0;
+    const bPinned = (b as JoiningRequest & { is_pinned?: boolean }).is_pinned ? 1 : 0;
+    return bPinned - aPinned;
+  });
 
   return (
     <section className="py-16 bg-muted/30" id="participants">
@@ -112,6 +117,9 @@ export default function ParticipantsList() {
                       {participant.name.charAt(0)}
                     </span>
                   </div>
+                )}
+                {(participant as JoiningRequest & { is_pinned?: boolean }).is_pinned && (
+                  <span className="text-amber-500 text-xs mb-1 block">📌</span>
                 )}
                 <p className="font-bengali font-semibold text-sm text-foreground mb-2 leading-tight">
                   {participant.name}

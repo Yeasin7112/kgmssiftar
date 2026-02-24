@@ -428,6 +428,12 @@ export default function AdminPanel() {
     fetchCommittee();
   };
 
+  const togglePinParticipant = async (req: JoiningRequest) => {
+    await supabase.from('joining_requests').update({ is_pinned: !(req as JoiningRequest & { is_pinned?: boolean }).is_pinned }).eq('id', req.id);
+    fetchRequests();
+    fetchApprovedList();
+  };
+
   const handleMemberPhotoChange = (e: React.ChangeEvent<HTMLInputElement>, isEdit = false) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -693,18 +699,28 @@ export default function AdminPanel() {
                                 </>
                               )}
                               {isSuperAdmin && (
-                                <button
-                                  onClick={() => deleteRequest(req.id)}
-                                  disabled={deletingId === req.id}
-                                  className="flex items-center gap-1 bg-red-50 text-red-600 border border-red-200 px-3 py-1.5 rounded-lg font-bengali text-sm hover:bg-red-100 transition disabled:opacity-50"
-                                  title="মুছে ফেলুন"
-                                >
-                                  {deletingId === req.id
-                                    ? <RefreshCw className="w-4 h-4 animate-spin" />
-                                    : <Trash2 className="w-4 h-4" />
-                                  }
-                                  <span className="hidden sm:inline">মুছুন</span>
-                                </button>
+                                <>
+                                  <button
+                                    onClick={() => togglePinParticipant(req)}
+                                    className={`flex items-center gap-1 px-3 py-1.5 rounded-lg font-bengali text-sm transition ${(req as JoiningRequest & { is_pinned?: boolean }).is_pinned ? 'bg-amber-100 text-amber-700 border border-amber-200' : 'bg-muted text-muted-foreground border border-border hover:border-amber-300'}`}
+                                    title={(req as JoiningRequest & { is_pinned?: boolean }).is_pinned ? 'পিন সরান' : 'পিন করুন'}
+                                  >
+                                    <Pin className="w-4 h-4" />
+                                    <span className="hidden sm:inline">{(req as JoiningRequest & { is_pinned?: boolean }).is_pinned ? 'পিন সরান' : 'পিন'}</span>
+                                  </button>
+                                  <button
+                                    onClick={() => deleteRequest(req.id)}
+                                    disabled={deletingId === req.id}
+                                    className="flex items-center gap-1 bg-red-50 text-red-600 border border-red-200 px-3 py-1.5 rounded-lg font-bengali text-sm hover:bg-red-100 transition disabled:opacity-50"
+                                    title="মুছে ফেলুন"
+                                  >
+                                    {deletingId === req.id
+                                      ? <RefreshCw className="w-4 h-4 animate-spin" />
+                                      : <Trash2 className="w-4 h-4" />
+                                    }
+                                    <span className="hidden sm:inline">মুছুন</span>
+                                  </button>
+                                </>
                               )}
                             </div>
                           </div>
