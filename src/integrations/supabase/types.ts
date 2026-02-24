@@ -91,6 +91,7 @@ export type Database = {
           added_by: string | null
           created_at: string
           id: string
+          is_pinned: boolean
           mobile_number: string | null
           name: string
           payment_amount: number
@@ -107,6 +108,7 @@ export type Database = {
           added_by?: string | null
           created_at?: string
           id?: string
+          is_pinned?: boolean
           mobile_number?: string | null
           name: string
           payment_amount?: number
@@ -123,6 +125,7 @@ export type Database = {
           added_by?: string | null
           created_at?: string
           id?: string
+          is_pinned?: boolean
           mobile_number?: string | null
           name?: string
           payment_amount?: number
