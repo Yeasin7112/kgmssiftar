@@ -46,9 +46,16 @@ export default function Header() {
         </h1>
 
         {/* Badge */}
-        <div className="inline-flex items-center gap-2 bg-amber-400/20 border border-amber-400/40 rounded-full px-5 py-2 mb-6">
-          <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-          <span className="text-amber-300 font-bengali-sans text-sm font-medium">
+        <div
+          className="inline-flex items-center gap-2.5 rounded-full px-7 py-2.5 mb-6 border-2"
+          style={{
+            background: 'linear-gradient(135deg, hsl(158 60% 18%), hsl(158 50% 22%), hsl(44 40% 22%))',
+            borderColor: 'hsl(44 80% 50% / 0.6)',
+            boxShadow: '0 0 20px hsl(44 80% 50% / 0.2), inset 0 1px 0 hsl(44 80% 70% / 0.15)',
+          }}
+        >
+          <span className="w-2.5 h-2.5 rounded-full animate-pulse" style={{ background: 'hsl(44 90% 55%)' }} />
+          <span className="font-bengali text-base md:text-lg font-bold tracking-wide" style={{ color: 'hsl(44 95% 72%)' }}>
             ২৮শে রমজান · ১৮ই মার্চ ২০২৬
           </span>
         </div>
