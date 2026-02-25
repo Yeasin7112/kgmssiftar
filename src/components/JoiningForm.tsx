@@ -192,7 +192,7 @@ export default function JoiningForm({ formRef }: JoiningFormProps) {
           </div>
         </div>
 
-        <div className="max-w-lg mx-auto text-center bg-card rounded-2xl border border-border shadow-card p-10 relative z-10 animate-scale-in">
+        <div className="max-w-lg mx-auto text-center bg-card rounded-2xl border border-border shadow-card p-10 relative animate-scale-in">
           <h3
             className="font-bengali text-2xl md:text-3xl font-bold text-primary mb-3"
             style={{ animation: 'fade-slide-up 0.6s 0.3s ease-out both' }}
