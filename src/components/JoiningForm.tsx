@@ -140,6 +140,9 @@ export default function JoiningForm({ formRef }: JoiningFormProps) {
           >
             আরেকজন রেজিস্ট্রেশন করুন
           </button>
+          <p className="font-bengali text-xs text-muted-foreground mt-4 opacity-60">
+            কারিগরি সহায়তায় — ইয়াছিন আরাফাত শাওন
+          </p>
         </div>
       </div>
     );
