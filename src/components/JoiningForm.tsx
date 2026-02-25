@@ -125,18 +125,85 @@ export default function JoiningForm({ formRef }: JoiningFormProps) {
 
   if (success) {
     return (
-      <div ref={formRef} className="py-16 px-4 bg-background">
-        <div className="max-w-lg mx-auto text-center bg-card rounded-2xl border border-border shadow-card p-10">
-          <div className="text-6xl mb-4">🌙</div>
-          <h3 className="font-bengali text-2xl font-bold text-primary mb-3">
+      <div ref={formRef} className="py-16 px-4 bg-background relative overflow-hidden">
+        {/* Confetti / star particles */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          {Array.from({ length: 30 }).map((_, i) => {
+            const left = Math.random() * 100;
+            const delay = Math.random() * 3;
+            const duration = 2 + Math.random() * 3;
+            const size = 6 + Math.random() * 10;
+            const colors = ['#f59e0b', '#10b981', '#6366f1', '#ec4899', '#f97316', '#14b8a6'];
+            const color = colors[i % colors.length];
+            const shape = i % 3 === 0 ? '★' : i % 3 === 1 ? '✦' : '●';
+            return (
+              <span
+                key={i}
+                className="absolute text-xs animate-bounce"
+                style={{
+                  left: `${left}%`,
+                  top: `-${size}px`,
+                  fontSize: `${size}px`,
+                  color,
+                  animation: `confetti-fall ${duration}s ${delay}s ease-in infinite`,
+                  opacity: 0.85,
+                }}
+              >
+                {shape}
+              </span>
+            );
+          })}
+        </div>
+
+        {/* Glowing moon animation */}
+        <div className="flex justify-center mb-6">
+          <div className="relative">
+            <div
+              className="text-7xl md:text-8xl"
+              style={{
+                animation: 'moon-float 3s ease-in-out infinite, moon-glow-pulse 2s ease-in-out infinite',
+                filter: 'drop-shadow(0 0 20px hsl(44 80% 50% / 0.6))',
+              }}
+            >
+              🌙
+            </div>
+            {/* Sparkles around moon */}
+            {[0, 60, 120, 180, 240, 300].map((deg, i) => (
+              <span
+                key={i}
+                className="absolute text-gold"
+                style={{
+                  top: '50%',
+                  left: '50%',
+                  fontSize: '12px',
+                  transform: `rotate(${deg}deg) translateY(-50px)`,
+                  animation: `sparkle-twinkle 1.5s ${i * 0.25}s ease-in-out infinite`,
+                  transformOrigin: '0 0',
+                }}
+              >
+                ✦
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div className="max-w-lg mx-auto text-center bg-card rounded-2xl border border-border shadow-card p-10 relative z-10 animate-scale-in">
+          <h3
+            className="font-bengali text-2xl md:text-3xl font-bold text-primary mb-3"
+            style={{ animation: 'fade-slide-up 0.6s 0.3s ease-out both' }}
+          >
             আলহামদুলিল্লাহ! সফলভাবে জমা হয়েছে
           </h3>
-          <p className="font-bengali text-muted-foreground mb-6">
+          <p
+            className="font-bengali text-muted-foreground mb-6"
+            style={{ animation: 'fade-slide-up 0.6s 0.5s ease-out both' }}
+          >
             আপনার রেজিস্ট্রেশন পেমেন্ট যাচাইয়ের পর অনুমোদন করা হবে। অনুগ্রহ করে অপেক্ষা করুন।
           </p>
           <button
             onClick={() => setSuccess(false)}
-            className="bg-primary text-primary-foreground font-bengali px-6 py-3 rounded-full hover:opacity-90 transition"
+            className="bg-primary text-primary-foreground font-bengali px-6 py-3 rounded-full hover:opacity-90 hover:scale-105 active:scale-95 transition-all shadow-lg"
+            style={{ animation: 'fade-slide-up 0.6s 0.7s ease-out both' }}
           >
             আরেকজন রেজিস্ট্রেশন করুন
           </button>
