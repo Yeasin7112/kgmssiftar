@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Share2, X, Download, Facebook, MessageCircle } from "lucide-react";
 
 interface ShareCardProps {
@@ -286,8 +287,8 @@ export default function ShareCard({ participantName, participantBatch }: ShareCa
       </button>
 
       {/* Modal */}
-      {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.75)' }}>
+      {open && createPortal(
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.75)' }}>
           <div className="bg-card rounded-2xl border border-border shadow-card w-full max-w-md max-h-[90vh] overflow-y-auto">
 
             {/* Header */}
@@ -373,7 +374,8 @@ export default function ShareCard({ participantName, participantBatch }: ShareCa
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
