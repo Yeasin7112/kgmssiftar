@@ -606,6 +606,39 @@ export default function AdminPanel() {
               ))}
             </div>
 
+            {/* Payment Method Summary */}
+            {(() => {
+              const approved = requests.filter(r => r.status === 'approved');
+              const methodMap = new Map<string, { count: number; total: number }>();
+              approved.forEach(r => {
+                const key = r.payment_method;
+                const prev = methodMap.get(key) || { count: 0, total: 0 };
+                methodMap.set(key, { count: prev.count + 1, total: prev.total + Number(r.payment_amount) });
+              });
+              const totalAmount = approved.reduce((s, r) => s + Number(r.payment_amount), 0);
+              const methods = [...methodMap.entries()].sort((a, b) => b[1].total - a[1].total);
+              if (methods.length === 0) return null;
+              return (
+                <div className="bg-card rounded-2xl border border-border shadow-card p-4 mb-6">
+                  <p className="font-bengali text-sm font-bold text-foreground mb-3">💰 পেমেন্ট মাধ্যম অনুযায়ী সারসংক্ষেপ (অনুমোদিত)</p>
+                  <div className="flex flex-wrap gap-2">
+                    {methods.map(([method, { count, total }]) => (
+                      <div key={method} className="bg-muted rounded-xl px-3 py-2 text-center min-w-[100px]">
+                        <p className="font-bengali text-xs text-muted-foreground">{method}</p>
+                        <p className="font-display text-sm font-bold text-foreground">৳{total}</p>
+                        <p className="font-bengali text-[10px] text-muted-foreground">{count} জন</p>
+                      </div>
+                    ))}
+                    <div className="bg-primary/10 rounded-xl px-3 py-2 text-center min-w-[100px] border border-primary/20">
+                      <p className="font-bengali text-xs text-primary">মোট</p>
+                      <p className="font-display text-sm font-bold text-primary">৳{totalAmount}</p>
+                      <p className="font-bengali text-[10px] text-primary/70">{approved.length} জন</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* Search + Filter row */}
             <div className="flex flex-col sm:flex-row gap-3 mb-6">
               <div className="relative flex-1">
