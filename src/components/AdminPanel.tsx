@@ -49,6 +49,7 @@ export default function AdminPanel() {
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
   const [searchQuery, setSearchQuery] = useState('');
+  const [paymentFilter, setPaymentFilter] = useState<string>('all');
   const [isAdmin, setIsAdmin] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [activeTab, setActiveTab] = useState<AdminTab>('requests');
@@ -669,12 +670,34 @@ export default function AdminPanel() {
               </div>
             </div>
 
+            {/* Payment method filter */}
             {(() => {
-              const filtered = requests.filter(r =>
-                r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                String(r.ssc_batch).includes(searchQuery) ||
-                (r.transaction_id || '').toLowerCase().includes(searchQuery.toLowerCase())
+              const methods = [...new Set(requests.map(r => r.payment_method))].sort();
+              if (methods.length <= 1) return null;
+              return (
+                <div className="flex gap-2 flex-wrap mb-6">
+                  <button onClick={() => setPaymentFilter('all')}
+                    className={`px-3 py-1.5 rounded-full font-bengali text-xs font-medium transition ${paymentFilter === 'all' ? 'bg-primary text-primary-foreground' : 'bg-card border border-border text-muted-foreground hover:border-primary/50'}`}>
+                    সব মাধ্যম
+                  </button>
+                  {methods.map(m => (
+                    <button key={m} onClick={() => setPaymentFilter(m)}
+                      className={`px-3 py-1.5 rounded-full font-bengali text-xs font-medium transition ${paymentFilter === m ? 'bg-primary text-primary-foreground' : 'bg-card border border-border text-muted-foreground hover:border-primary/50'}`}>
+                      {m} ({requests.filter(r => r.payment_method === m).length})
+                    </button>
+                  ))}
+                </div>
               );
+            })()}
+
+            {(() => {
+              const filtered = requests
+                .filter(r => paymentFilter === 'all' || r.payment_method === paymentFilter)
+                .filter(r =>
+                  r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  String(r.ssc_batch).includes(searchQuery) ||
+                  (r.transaction_id || '').toLowerCase().includes(searchQuery.toLowerCase())
+                );
               if (loading) return (
                 <div className="text-center py-12">
                   <RefreshCw className="w-8 h-8 text-primary mx-auto animate-spin mb-3" />
