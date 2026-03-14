@@ -325,6 +325,7 @@ export default function AdminPanel() {
   </div>
   ${groupedHTML}
   <p style="text-align:right;font-size:11px;color:#999;margin-top:24px;">মুদ্রণের তারিখ: ${new Date().toLocaleDateString('bn-BD')}</p>
+  <div class="footer-credit">কারিগরি সহায়তায় : <strong>ইয়াছিন আরাফাত শাওন</strong></div>
 </body>
 </html>`);
     printWindow.document.close();
