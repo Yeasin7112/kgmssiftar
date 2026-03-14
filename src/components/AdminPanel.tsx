@@ -300,14 +300,19 @@ export default function AdminPanel() {
 <head>
   <meta charset="UTF-8" />
   <title>ইফতার ২০২৬ — অংশগ্রহণকারী তালিকা</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700&family=Noto+Serif+Bengali:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'SolaimanLipi', Arial, sans-serif; margin: 20px; color: #111; }
-    @media print { body { margin: 10px; } }
-    h1 { text-align:center; color:#1a4731; margin-bottom:4px; font-size:20px; }
-    .meta { text-align:center; color:#666; font-size:13px; margin-bottom:24px; }
+    body { font-family: 'Noto Sans Bengali', sans-serif; margin: 20px; color: #111; line-height: 1.6; }
+    @media print { body { margin: 10px; } .no-print { display: none !important; } }
+    h1 { font-family: 'Noto Serif Bengali', serif; text-align:center; color:#1a4731; margin-bottom:4px; font-size:22px; font-weight:700; }
+    h3 { font-family: 'Noto Serif Bengali', serif; }
+    .meta { text-align:center; color:#666; font-size:13px; margin-bottom:24px; font-weight:500; }
     .summary { display:flex; gap:24px; justify-content:center; margin-bottom:24px; background:#f9f9f9; padding:12px; border-radius:8px; }
     .summary div { text-align:center; }
-    .summary strong { display:block; font-size:18px; color:#1a4731; }
+    .summary strong { display:block; font-size:18px; color:#1a4731; font-weight:700; }
+    table { font-family: 'Noto Sans Bengali', sans-serif; }
+    .footer-credit { text-align:center; margin-top:40px; padding-top:16px; border-top:1px solid #e0e0e0; font-size:12px; color:#888; }
+    .footer-credit strong { color:#1a4731; font-weight:600; }
   </style>
 </head>
 <body>
