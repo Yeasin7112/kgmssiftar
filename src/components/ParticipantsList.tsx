@@ -21,7 +21,6 @@ export default function ParticipantsList() {
 
   useEffect(() => {
     fetchParticipants();
-    // Realtime subscription
     const channel = supabase
       .channel('approved-participants')
       .on('postgres_changes', {
@@ -42,15 +41,23 @@ export default function ParticipantsList() {
     return bPinned - aPinned;
   });
 
+  const cardColors = [
+    { border: 'hsl(270 55% 45% / 0.3)', shadow: 'hsl(270 55% 45% / 0.1)' },
+    { border: 'hsl(330 70% 50% / 0.3)', shadow: 'hsl(330 70% 50% / 0.1)' },
+    { border: 'hsl(170 65% 42% / 0.3)', shadow: 'hsl(170 65% 42% / 0.1)' },
+    { border: 'hsl(32 95% 55% / 0.3)', shadow: 'hsl(32 95% 55% / 0.1)' },
+    { border: 'hsl(200 80% 55% / 0.3)', shadow: 'hsl(200 80% 55% / 0.1)' },
+  ];
+
   return (
-    <section className="py-16 bg-muted/30" id="participants">
+    <section className="py-16" id="participants" style={{ background: 'linear-gradient(180deg, hsl(270 15% 96%), hsl(330 10% 97%))' }}>
       <div className="container mx-auto px-4">
         {/* Section header */}
         <div className="text-center mb-10">
           <div className="ornament-divider mb-4 max-w-sm mx-auto">
-            <span className="text-gold text-xl">✦</span>
+            <span style={{ color: 'hsl(330 70% 55%)' }} className="text-xl">✦</span>
             <span className="text-primary font-display text-sm tracking-widest uppercase">Participants</span>
-            <span className="text-gold text-xl">✦</span>
+            <span style={{ color: 'hsl(170 65% 45%)' }} className="text-xl">✦</span>
           </div>
           <h2 className="font-bengali text-3xl md:text-4xl font-bold text-primary mb-3">
             যারা যোগ দিচ্ছেন
@@ -62,11 +69,12 @@ export default function ParticipantsList() {
           <div className="flex items-center justify-center gap-2 mb-6 flex-wrap">
             <button
               onClick={() => setSelectedBatch('all')}
-              className={`px-4 py-2 rounded-full font-bengali text-sm font-medium transition ${
+              className={`px-4 py-2 rounded-full font-bengali text-sm font-medium transition-all duration-200 ${
                 selectedBatch === 'all'
-                  ? 'bg-primary text-primary-foreground'
+                  ? 'text-white shadow-lg'
                   : 'bg-card border border-border text-muted-foreground hover:border-primary/50'
               }`}
+              style={selectedBatch === 'all' ? { background: 'linear-gradient(135deg, hsl(270 55% 45%), hsl(330 70% 50%))' } : {}}
             >
               সব ব্যাচ ({participants.length})
             </button>
@@ -74,11 +82,12 @@ export default function ParticipantsList() {
               <button
                 key={batch}
                 onClick={() => setSelectedBatch(batch)}
-                className={`px-4 py-2 rounded-full font-bengali text-sm font-medium transition ${
+                className={`px-4 py-2 rounded-full font-bengali text-sm font-medium transition-all duration-200 ${
                   selectedBatch === batch
-                    ? 'bg-primary text-primary-foreground'
+                    ? 'text-white shadow-lg'
                     : 'bg-card border border-border text-muted-foreground hover:border-primary/50'
                 }`}
+                style={selectedBatch === batch ? { background: 'linear-gradient(135deg, hsl(330 70% 50%), hsl(32 95% 55%))' } : {}}
               >
                 {batch} ({participants.filter(p => p.ssc_batch === batch).length})
               </button>
@@ -99,36 +108,46 @@ export default function ParticipantsList() {
           </div>
         ) : (
           <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-4 -mx-4 px-4">
-            {filtered.map((participant) => (
-              <div
-                key={participant.id}
-                className="flex-shrink-0 w-48 snap-center bg-card rounded-2xl border border-border shadow-card p-5 text-center hover:shadow-gold transition-all duration-300"
-              >
-                {participant.photo_url ? (
-                  <img
-                    src={participant.photo_url}
-                    alt={participant.name}
-                    className="w-20 h-20 rounded-full object-cover mx-auto mb-3"
-                    style={{ borderWidth: '3px', borderStyle: 'solid', borderColor: 'hsl(var(--primary) / 0.3)' }}
-                  />
-                ) : (
-                  <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
-                    <span className="text-3xl font-bold text-primary font-bengali">
-                      {participant.name.charAt(0)}
-                    </span>
-                  </div>
-                )}
-                {(participant as JoiningRequest & { is_pinned?: boolean }).is_pinned && (
-                  <span className="text-amber-500 text-xs mb-1 block">📌</span>
-                )}
-                <p className="font-bengali font-semibold text-sm text-foreground mb-2 leading-tight">
-                  {participant.name}
-                </p>
-                <span className="inline-block bg-primary/10 text-primary text-xs font-bengali px-2 py-0.5 rounded-full">
-                  {participant.ssc_batch} ব্যাচ
-                </span>
-              </div>
-            ))}
+            {filtered.map((participant, idx) => {
+              const colors = cardColors[idx % cardColors.length];
+              return (
+                <div
+                  key={participant.id}
+                  className="flex-shrink-0 w-48 snap-center bg-card rounded-2xl border-2 p-5 text-center hover:-translate-y-1 transition-all duration-300"
+                  style={{
+                    borderColor: colors.border,
+                    boxShadow: `0 8px 30px ${colors.shadow}`,
+                  }}
+                >
+                  {participant.photo_url ? (
+                    <img
+                      src={participant.photo_url}
+                      alt={participant.name}
+                      className="w-20 h-20 rounded-full object-cover mx-auto mb-3"
+                      style={{ borderWidth: '3px', borderStyle: 'solid', borderColor: colors.border }}
+                    />
+                  ) : (
+                    <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-3" style={{ background: `${colors.shadow}` }}>
+                      <span className="text-3xl font-bold text-primary font-bengali">
+                        {participant.name.charAt(0)}
+                      </span>
+                    </div>
+                  )}
+                  {(participant as JoiningRequest & { is_pinned?: boolean }).is_pinned && (
+                    <span className="text-amber-500 text-xs mb-1 block">📌</span>
+                  )}
+                  <p className="font-bengali font-semibold text-sm text-foreground mb-2 leading-tight">
+                    {participant.name}
+                  </p>
+                  <span
+                    className="inline-block text-xs font-bengali px-3 py-1 rounded-full text-white font-medium"
+                    style={{ background: `linear-gradient(135deg, hsl(270 55% 45%), hsl(330 60% 50%))` }}
+                  >
+                    {participant.ssc_batch} ব্যাচ
+                  </span>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

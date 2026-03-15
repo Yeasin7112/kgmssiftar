@@ -13,6 +13,13 @@ interface PreviousEventsProps {
   onJoinClick?: () => void;
 }
 
+const frameBorders = [
+  'hsl(270 55% 50%)',
+  'hsl(330 70% 50%)',
+  'hsl(170 65% 42%)',
+  'hsl(32 95% 55%)',
+];
+
 export default function PreviousEvents({ onJoinClick }: PreviousEventsProps) {
   const [photos, setPhotos] = useState<EventPhoto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,12 +44,11 @@ export default function PreviousEvents({ onJoinClick }: PreviousEventsProps) {
     <>
       <section className="py-16 bg-background" id="previous-events">
         <div className="container mx-auto px-4">
-          {/* Section header */}
           <div className="text-center mb-10">
             <div className="ornament-divider mb-4 max-w-sm mx-auto">
-              <span className="text-gold text-xl">✦</span>
+              <span style={{ color: 'hsl(32 95% 55%)' }} className="text-xl">✦</span>
               <span className="text-primary font-display text-sm tracking-widest uppercase">স্মৃতি</span>
-              <span className="text-gold text-xl">✦</span>
+              <span style={{ color: 'hsl(270 55% 50%)' }} className="text-xl">✦</span>
             </div>
             <h2 className="font-bengali text-3xl md:text-4xl font-bold text-primary mb-3">
               পূর্ববর্তী আয়োজন
@@ -53,11 +59,10 @@ export default function PreviousEvents({ onJoinClick }: PreviousEventsProps) {
             {onJoinClick && (
               <button
                 onClick={onJoinClick}
-                className="mt-5 inline-flex items-center gap-2 px-6 py-3 rounded-full font-bengali font-bold text-sm transition-all hover:scale-105 active:scale-95"
+                className="mt-5 inline-flex items-center gap-2 px-6 py-3 rounded-full font-bengali font-bold text-sm transition-all hover:scale-105 active:scale-95 text-white"
                 style={{
-                  background: 'linear-gradient(135deg, hsl(44 85% 52%), hsl(38 90% 62%))',
-                  color: 'hsl(158 70% 10%)',
-                  boxShadow: '0 4px 20px hsl(44 80% 52% / 0.4)',
+                  background: 'linear-gradient(135deg, hsl(270 55% 50%), hsl(330 70% 50%), hsl(32 95% 55%))',
+                  boxShadow: '0 4px 20px hsl(270 55% 50% / 0.3)',
                 }}
               >
                 🌙 এখনই রেজিষ্ট্রেশন করুন
@@ -72,34 +77,42 @@ export default function PreviousEvents({ onJoinClick }: PreviousEventsProps) {
             </div>
           ) : (
             <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-4 -mx-4 px-4">
-              {photos.map((photo, i) => (
-                <div
-                  key={photo.id}
-                  onClick={() => setSelectedPhoto(photo)}
-                  className="flex-shrink-0 w-[80vw] max-w-sm snap-center rounded-2xl overflow-hidden border border-border shadow-card group relative cursor-pointer"
-                  style={{ animationDelay: `${i * 60}ms` }}
-                >
-                  <img
-                    src={photo.photo_url}
-                    alt={photo.caption || 'Previous event photo'}
-                    className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-500"
-                    loading="lazy"
-                  />
-                  {/* Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex items-end p-3">
-                    <div>
-                      {photo.caption && (
-                        <p className="font-bengali font-bold text-white text-sm leading-tight">{photo.caption}</p>
-                      )}
-                      {photo.event_year && (
-                        <span className="inline-block bg-amber-400/90 text-amber-900 text-xs font-bold px-2 py-0.5 rounded-full mt-1">
-                          {photo.event_year}
-                        </span>
-                      )}
+              {photos.map((photo, i) => {
+                const borderColor = frameBorders[i % frameBorders.length];
+                return (
+                  <div
+                    key={photo.id}
+                    onClick={() => setSelectedPhoto(photo)}
+                    className="flex-shrink-0 w-[80vw] max-w-sm snap-center rounded-2xl overflow-hidden border-2 group relative cursor-pointer transition-transform hover:-translate-y-1 duration-300"
+                    style={{
+                      borderColor,
+                      boxShadow: `0 6px 24px ${borderColor}25`,
+                    }}
+                  >
+                    <img
+                      src={photo.photo_url}
+                      alt={photo.caption || 'Previous event photo'}
+                      className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-500"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex items-end p-3">
+                      <div>
+                        {photo.caption && (
+                          <p className="font-bengali font-bold text-white text-sm leading-tight">{photo.caption}</p>
+                        )}
+                        {photo.event_year && (
+                          <span
+                            className="inline-block text-xs font-bold px-2 py-0.5 rounded-full mt-1 text-white"
+                            style={{ background: borderColor }}
+                          >
+                            {photo.event_year}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
 
@@ -115,7 +128,8 @@ export default function PreviousEvents({ onJoinClick }: PreviousEventsProps) {
       {/* Lightbox */}
       {selectedPhoto && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'rgba(20,5,40,0.9)' }}
           onClick={() => setSelectedPhoto(null)}
         >
           <div
@@ -132,12 +146,12 @@ export default function PreviousEvents({ onJoinClick }: PreviousEventsProps) {
               className="w-full rounded-2xl object-contain max-h-[80vh]"
             />
             {(selectedPhoto.caption || selectedPhoto.event_year) && (
-              <div className="bg-black/70 rounded-b-2xl px-5 py-3 flex items-center gap-3">
+              <div className="rounded-b-2xl px-5 py-3 flex items-center gap-3" style={{ background: 'rgba(20,5,40,0.8)' }}>
                 {selectedPhoto.caption && (
                   <p className="font-bengali text-white flex-1">{selectedPhoto.caption}</p>
                 )}
                 {selectedPhoto.event_year && (
-                  <span className="bg-amber-400 text-amber-900 text-sm font-bold px-3 py-1 rounded-full flex-shrink-0">
+                  <span className="text-sm font-bold px-3 py-1 rounded-full flex-shrink-0 text-white" style={{ background: 'linear-gradient(135deg, hsl(270 55% 50%), hsl(330 70% 50%))' }}>
                     {selectedPhoto.event_year}
                   </span>
                 )}
