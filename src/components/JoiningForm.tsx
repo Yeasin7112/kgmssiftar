@@ -270,8 +270,8 @@ export default function JoiningForm({ formRef }: JoiningFormProps) {
 
         <form onSubmit={handleSubmit} className="shadow-card rounded-2xl border border-border overflow-hidden bg-card">
           {/* Form header */}
-          <div className="p-5 text-center bg-primary">
-            <p className="font-bengali font-semibold text-lg text-primary-foreground">
+          <div className="p-5 text-center" style={{ background: 'linear-gradient(135deg, hsl(270 55% 45%), hsl(330 60% 48%), hsl(32 80% 50%))' }}>
+            <p className="font-bengali font-semibold text-lg text-white">
               🌙 ইফতার মাহফিল ২০২৬ — রেজিস্ট্রেশন
             </p>
           </div>
