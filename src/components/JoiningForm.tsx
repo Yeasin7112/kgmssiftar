@@ -253,9 +253,9 @@ export default function JoiningForm({ formRef }: JoiningFormProps) {
         {/* Section header */}
         <div className="text-center mb-10">
           <div className="ornament-divider mb-4 max-w-sm mx-auto">
-            <span className="text-gold text-xl">✦</span>
+            <span style={{ color: 'hsl(330 70% 55%)' }} className="text-xl">✦</span>
             <span className="text-primary font-display text-sm tracking-widest uppercase">Registration</span>
-            <span className="text-gold text-xl">✦</span>
+            <span style={{ color: 'hsl(170 65% 45%)' }} className="text-xl">✦</span>
           </div>
           <h2 className="font-bengali text-3xl md:text-4xl font-bold text-primary mb-3">
             রেজিস্ট্রেশন ফর্ম
