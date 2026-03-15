@@ -253,9 +253,9 @@ export default function JoiningForm({ formRef }: JoiningFormProps) {
         {/* Section header */}
         <div className="text-center mb-10">
           <div className="ornament-divider mb-4 max-w-sm mx-auto">
-            <span className="text-gold text-xl">✦</span>
+            <span style={{ color: 'hsl(330 70% 55%)' }} className="text-xl">✦</span>
             <span className="text-primary font-display text-sm tracking-widest uppercase">Registration</span>
-            <span className="text-gold text-xl">✦</span>
+            <span style={{ color: 'hsl(170 65% 45%)' }} className="text-xl">✦</span>
           </div>
           <h2 className="font-bengali text-3xl md:text-4xl font-bold text-primary mb-3">
             রেজিস্ট্রেশন ফর্ম
@@ -270,8 +270,8 @@ export default function JoiningForm({ formRef }: JoiningFormProps) {
 
         <form onSubmit={handleSubmit} className="shadow-card rounded-2xl border border-border overflow-hidden bg-card">
           {/* Form header */}
-          <div className="p-5 text-center bg-primary">
-            <p className="font-bengali font-semibold text-lg text-primary-foreground">
+          <div className="p-5 text-center" style={{ background: 'linear-gradient(135deg, hsl(270 55% 45%), hsl(330 60% 48%), hsl(32 80% 50%))' }}>
+            <p className="font-bengali font-semibold text-lg text-white">
               🌙 ইফতার মাহফিল ২০২৬ — রেজিস্ট্রেশন
             </p>
           </div>
@@ -483,7 +483,8 @@ export default function JoiningForm({ formRef }: JoiningFormProps) {
             )}
 
             <button type="submit" disabled={loading}
-              className="w-full py-4 rounded-xl font-bengali text-lg font-bold bg-gold text-primary hover:opacity-90 active:scale-95 disabled:opacity-50 transition-all shadow-lg">
+              className="w-full py-4 rounded-xl font-bengali text-lg font-bold text-white hover:opacity-90 active:scale-95 disabled:opacity-50 transition-all shadow-lg"
+              style={{ background: 'linear-gradient(135deg, hsl(330 70% 50%), hsl(270 55% 50%), hsl(32 95% 55%))' }}>
               {loading ? '⏳ জমা হচ্ছে...' : '🌙 রেজিস্ট্রেশন জমা দিন'}
             </button>
           </div>

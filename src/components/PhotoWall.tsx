@@ -7,6 +7,14 @@ interface PhotoWallProps {
   onJoinClick?: () => void;
 }
 
+const borderColors = [
+  'hsl(270 55% 50%)',
+  'hsl(330 70% 50%)',
+  'hsl(170 65% 42%)',
+  'hsl(32 95% 55%)',
+  'hsl(200 80% 55%)',
+];
+
 export default function PhotoWall({ onJoinClick }: PhotoWallProps) {
   const [photos, setPhotos] = useState<JoiningRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,9 +48,9 @@ export default function PhotoWall({ onJoinClick }: PhotoWallProps) {
         {/* Section header */}
         <div className="text-center mb-10">
           <div className="ornament-divider mb-4 max-w-sm mx-auto">
-            <span className="text-gold text-xl">✦</span>
+            <span style={{ color: 'hsl(270 55% 50%)' }} className="text-xl">✦</span>
             <span className="text-primary font-display text-sm tracking-widest uppercase">Gallery</span>
-            <span className="text-gold text-xl">✦</span>
+            <span style={{ color: 'hsl(32 95% 55%)' }} className="text-xl">✦</span>
           </div>
           <h2 className="font-bengali text-3xl md:text-4xl font-bold text-primary mb-3">
             স্মৃতির দেওয়াল
@@ -53,11 +61,10 @@ export default function PhotoWall({ onJoinClick }: PhotoWallProps) {
           {onJoinClick && (
             <button
               onClick={onJoinClick}
-              className="mt-5 inline-flex items-center gap-2 px-6 py-3 rounded-full font-bengali font-bold text-sm transition-all hover:scale-105 active:scale-95"
+              className="mt-5 inline-flex items-center gap-2 px-6 py-3 rounded-full font-bengali font-bold text-sm transition-all hover:scale-105 active:scale-95 text-white"
               style={{
-                background: 'linear-gradient(135deg, hsl(44 85% 52%), hsl(38 90% 62%))',
-                color: 'hsl(158 70% 10%)',
-                boxShadow: '0 4px 20px hsl(44 80% 52% / 0.4)',
+                background: 'linear-gradient(135deg, hsl(330 70% 50%), hsl(270 55% 50%), hsl(32 95% 55%))',
+                boxShadow: '0 4px 20px hsl(330 70% 50% / 0.3)',
               }}
             >
               🌙 এখনই রেজিষ্ট্রেশন করুন
@@ -75,8 +82,11 @@ export default function PhotoWall({ onJoinClick }: PhotoWallProps) {
             {photos.map((p, i) => (
               <div
                 key={p.id}
-                className="flex-shrink-0 w-44 rounded-2xl overflow-hidden border border-border shadow-card group relative cursor-pointer snap-start"
-                style={{ animationDelay: `${i * 60}ms` }}
+                className="flex-shrink-0 w-44 rounded-2xl overflow-hidden border-2 group relative cursor-pointer snap-start transition-transform hover:-translate-y-1 duration-300"
+                style={{
+                  borderColor: borderColors[i % borderColors.length],
+                  boxShadow: `0 6px 24px ${borderColors[i % borderColors.length]}25`,
+                }}
               >
                 <img
                   src={p.photo_url!}
@@ -84,11 +94,13 @@ export default function PhotoWall({ onJoinClick }: PhotoWallProps) {
                   className="w-full h-52 object-cover group-hover:scale-105 transition-transform duration-500"
                   loading="lazy"
                 />
-                {/* Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-3">
                   <div>
                     <p className="font-bengali font-bold text-white text-sm leading-tight">{p.name}</p>
-                    <span className="inline-block bg-amber-400/90 text-amber-900 text-xs font-bengali px-2 py-0.5 rounded-full mt-1">
+                    <span
+                      className="inline-block text-xs font-bengali px-2 py-0.5 rounded-full mt-1 text-white"
+                      style={{ background: borderColors[i % borderColors.length] }}
+                    >
                       {p.ssc_batch} ব্যাচ
                     </span>
                   </div>

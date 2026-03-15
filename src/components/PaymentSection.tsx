@@ -47,9 +47,9 @@ export default function PaymentSection() {
       <div className="container mx-auto px-4">
         <div className="text-center mb-10">
           <div className="ornament-divider mb-4 max-w-sm mx-auto">
-            <span className="text-gold text-xl">✦</span>
+            <span style={{ color: 'hsl(32 95% 55%)' }} className="text-xl">✦</span>
             <span className="text-primary font-display text-sm tracking-widest uppercase">Payment</span>
-            <span className="text-gold text-xl">✦</span>
+            <span style={{ color: 'hsl(330 70% 55%)' }} className="text-xl">✦</span>
           </div>
           <h2 className="font-bengali text-3xl md:text-4xl font-bold text-primary mb-3">
             পেমেন্ট পদ্ধতি
