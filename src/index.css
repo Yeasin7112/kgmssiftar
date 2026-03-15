@@ -6,58 +6,67 @@
 
 @layer base {
   :root {
-    --background: 160 20% 97%;
-    --foreground: 160 50% 8%;
+    --background: 45 30% 97%;
+    --foreground: 260 30% 12%;
 
     --card: 0 0% 100%;
-    --card-foreground: 160 50% 8%;
+    --card-foreground: 260 30% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 160 50% 8%;
+    --popover-foreground: 260 30% 12%;
 
-    --primary: 158 64% 28%;
-    --primary-foreground: 45 100% 95%;
+    --primary: 270 55% 45%;
+    --primary-foreground: 45 100% 97%;
 
-    --secondary: 44 80% 52%;
-    --secondary-foreground: 160 50% 8%;
+    --secondary: 32 95% 55%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 160 20% 93%;
-    --muted-foreground: 160 25% 45%;
+    --muted: 270 15% 93%;
+    --muted-foreground: 260 15% 45%;
 
-    --accent: 44 80% 52%;
-    --accent-foreground: 160 50% 8%;
+    --accent: 170 65% 40%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 160 20% 85%;
-    --input: 160 20% 85%;
-    --ring: 158 64% 28%;
+    --border: 270 15% 87%;
+    --input: 270 15% 87%;
+    --ring: 270 55% 45%;
 
     --radius: 0.75rem;
 
-    --sidebar-background: 160 40% 12%;
+    --sidebar-background: 270 45% 12%;
     --sidebar-foreground: 45 100% 90%;
-    --sidebar-primary: 44 80% 52%;
-    --sidebar-primary-foreground: 160 50% 8%;
-    --sidebar-accent: 158 50% 20%;
+    --sidebar-primary: 32 95% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 270 40% 22%;
     --sidebar-accent-foreground: 45 100% 90%;
-    --sidebar-border: 158 40% 20%;
-    --sidebar-ring: 44 80% 52%;
+    --sidebar-border: 270 35% 22%;
+    --sidebar-ring: 32 95% 55%;
 
-    /* Custom tokens */
+    /* Festive tokens */
     --gold: 44 80% 52%;
     --gold-light: 44 90% 70%;
     --gold-dark: 38 70% 38%;
-    --emerald: 158 64% 28%;
-    --emerald-dark: 158 70% 15%;
-    --emerald-light: 158 50% 40%;
-    --gradient-hero: linear-gradient(135deg, hsl(158 70% 10%) 0%, hsl(158 60% 20%) 50%, hsl(38 60% 20%) 100%);
-    --gradient-gold: linear-gradient(135deg, hsl(44 80% 45%), hsl(38 90% 60%));
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(160 30% 97%) 100%);
-    --shadow-gold: 0 4px 30px hsl(44 80% 52% / 0.3);
-    --shadow-card: 0 8px 40px hsl(158 64% 10% / 0.12);
-    --border-ornament: 1px solid hsl(44 80% 52% / 0.4);
+    --emerald: 170 65% 40%;
+    --emerald-dark: 170 70% 18%;
+    --emerald-light: 170 50% 50%;
+    --festive-purple: 270 55% 45%;
+    --festive-magenta: 330 70% 50%;
+    --festive-teal: 170 65% 40%;
+    --festive-saffron: 32 95% 55%;
+    --festive-coral: 10 80% 60%;
+    --festive-sky: 200 80% 55%;
+
+    --gradient-hero: linear-gradient(135deg, hsl(270 60% 12%) 0%, hsl(270 50% 22%) 30%, hsl(330 40% 20%) 60%, hsl(32 50% 18%) 100%);
+    --gradient-gold: linear-gradient(135deg, hsl(32 95% 50%), hsl(44 90% 60%));
+    --gradient-festive: linear-gradient(135deg, hsl(270 55% 45%), hsl(330 70% 50%), hsl(32 95% 55%));
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(270 20% 97%) 100%);
+    --shadow-gold: 0 4px 30px hsl(32 95% 55% / 0.3);
+    --shadow-card: 0 8px 40px hsl(270 55% 20% / 0.12);
+    --shadow-festive: 0 8px 32px hsl(330 70% 50% / 0.2);
+    --border-ornament: 1px solid hsl(32 95% 55% / 0.4);
   }
 }
 
@@ -95,6 +104,10 @@
     background: var(--gradient-gold);
   }
 
+  .gradient-festive {
+    background: var(--gradient-festive);
+  }
+
   .gradient-card {
     background: var(--gradient-card);
   }
@@ -105,6 +118,10 @@
 
   .shadow-card {
     box-shadow: var(--shadow-card);
+  }
+
+  .shadow-festive {
+    box-shadow: var(--shadow-festive);
   }
 
   .border-ornament {
@@ -133,9 +150,9 @@
   .ornament-divider::after {
     content: '';
     flex: 1;
-    height: 1px;
-    background: var(--gradient-gold);
-    opacity: 0.6;
+    height: 2px;
+    background: var(--gradient-festive);
+    opacity: 0.5;
   }
 }
 
@@ -156,6 +173,14 @@
   background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23d4a017' fill-opacity='0.06'%3E%3Cpath d='M30 0l30 30-30 30L0 30z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
 }
 
+/* Festive lantern pattern */
+.festive-pattern {
+  background-image:
+    radial-gradient(ellipse at 20% 50%, hsl(330 70% 50% / 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 50%, hsl(270 55% 45% / 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 20%, hsl(32 95% 55% / 0.05) 0%, transparent 50%);
+}
+
 /* Animations */
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
@@ -172,14 +197,26 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes color-shift {
+  0%, 100% { filter: hue-rotate(0deg); }
+  33% { filter: hue-rotate(15deg); }
+  66% { filter: hue-rotate(-15deg); }
+}
+
+@keyframes lantern-sway {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  25% { transform: translateY(-6px) rotate(2deg); }
+  75% { transform: translateY(-4px) rotate(-2deg); }
+}
+
 .animate-float {
   animation: float 4s ease-in-out infinite;
 }
 
 .animate-shimmer {
-  background: linear-gradient(90deg, hsl(44 80% 52%), hsl(44 95% 70%), hsl(44 80% 52%));
-  background-size: 200% auto;
-  animation: shimmer 3s linear infinite;
+  background: linear-gradient(90deg, hsl(32 95% 55%), hsl(330 70% 55%), hsl(270 55% 50%), hsl(32 95% 55%));
+  background-size: 300% auto;
+  animation: shimmer 4s linear infinite;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -187,6 +224,10 @@
 
 .animate-fade-in-up {
   animation: fadeInUp 0.7s ease-out forwards;
+}
+
+.animate-lantern {
+  animation: lantern-sway 5s ease-in-out infinite;
 }
 
 /* Success page animations */
@@ -201,8 +242,8 @@
 }
 
 @keyframes moon-glow-pulse {
-  0%, 100% { filter: drop-shadow(0 0 20px hsl(44 80% 50% / 0.4)); }
-  50% { filter: drop-shadow(0 0 40px hsl(44 80% 50% / 0.8)); }
+  0%, 100% { filter: drop-shadow(0 0 20px hsl(32 95% 55% / 0.4)); }
+  50% { filter: drop-shadow(0 0 40px hsl(330 70% 50% / 0.6)); }
 }
 
 @keyframes sparkle-twinkle {
