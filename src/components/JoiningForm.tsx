@@ -483,7 +483,8 @@ export default function JoiningForm({ formRef }: JoiningFormProps) {
             )}
 
             <button type="submit" disabled={loading}
-              className="w-full py-4 rounded-xl font-bengali text-lg font-bold bg-gold text-primary hover:opacity-90 active:scale-95 disabled:opacity-50 transition-all shadow-lg">
+              className="w-full py-4 rounded-xl font-bengali text-lg font-bold text-white hover:opacity-90 active:scale-95 disabled:opacity-50 transition-all shadow-lg"
+              style={{ background: 'linear-gradient(135deg, hsl(330 70% 50%), hsl(270 55% 50%), hsl(32 95% 55%))' }}>
               {loading ? '⏳ জমা হচ্ছে...' : '🌙 রেজিস্ট্রেশন জমা দিন'}
             </button>
           </div>
